@@ -24,6 +24,11 @@ public class PlayerController : MonoBehaviour
     [SerializeField] int projectilePoolSize = 10;
     [SerializeField] Vector3 shootOffset = new(0f, 0.5f, 1f);
 
+    [Header("Shield")]
+    [SerializeField] float shieldDuration = 1f;
+    [SerializeField] float shieldCooldown = 3f;
+    [SerializeField] Color shieldColor = new(0f, 0.5f, 1f, 0.3f);
+
     [Header("Ground Detection")]
     [SerializeField] float groundTolerance = 0.05f;
 
@@ -45,6 +50,14 @@ public class PlayerController : MonoBehaviour
     // Shooting state
     float shootCooldownTimer;
     GameObject[] projectilePool;
+
+    // Shield state
+    float shieldTimer;
+    float shieldCooldownTimer;
+    bool isShielded;
+    GameObject shieldVisual;
+    PlayerHealth playerHealth;
+    UIManager uiManager;
 
     void Awake()
     {
@@ -71,8 +84,12 @@ public class PlayerController : MonoBehaviour
         inputProcessor.OnJumpPressed += OnJumpPressed;
         inputProcessor.OnSlidePressed += OnSlidePressed;
         inputProcessor.OnShootPressed += OnShootPressed;
+        inputProcessor.OnShieldPressed += OnShieldPressed;
 
+        playerHealth = GetComponent<PlayerHealth>();
+        uiManager = FindObjectOfType<UIManager>();
         InitProjectilePool();
+        CreateShieldVisual();
     }
 
     void OnDestroy()
@@ -82,6 +99,7 @@ public class PlayerController : MonoBehaviour
             inputProcessor.OnJumpPressed -= OnJumpPressed;
             inputProcessor.OnSlidePressed -= OnSlidePressed;
             inputProcessor.OnShootPressed -= OnShootPressed;
+            inputProcessor.OnShieldPressed -= OnShieldPressed;
         }
     }
 
@@ -95,6 +113,7 @@ public class PlayerController : MonoBehaviour
             rb.isKinematic = true;
             jumpRequested = false;
             if (isSliding) EndSlide();
+            if (isShielded) DeactivateShield();
         }
         else
         {
@@ -131,6 +150,19 @@ public class PlayerController : MonoBehaviour
 
         if (shootCooldownTimer > 0f)
             shootCooldownTimer -= Time.deltaTime;
+
+        if (shieldCooldownTimer > 0f)
+            shieldCooldownTimer -= Time.deltaTime;
+
+        if (isShielded)
+        {
+            shieldTimer -= Time.deltaTime;
+            if (shieldTimer <= 0f)
+                DeactivateShield();
+        }
+
+        if (uiManager != null)
+            uiManager.UpdateShield(isShielded, shieldCooldownTimer);
     }
 
     void FixedUpdate()
@@ -242,5 +274,67 @@ public class PlayerController : MonoBehaviour
                 return projectilePool[i];
         }
         return null;
+    }
+
+    // ---- Shield ----
+
+    void OnShieldPressed()
+    {
+        if (!movementEnabled || isShielded || shieldCooldownTimer > 0f) return;
+
+        ActivateShield();
+    }
+
+    void ActivateShield()
+    {
+        isShielded = true;
+        shieldTimer = shieldDuration;
+
+        if (playerHealth != null)
+            playerHealth.SetShielded(true);
+
+        if (shieldVisual != null)
+            shieldVisual.SetActive(true);
+    }
+
+    void DeactivateShield()
+    {
+        isShielded = false;
+        shieldCooldownTimer = shieldCooldown;
+
+        if (playerHealth != null)
+            playerHealth.SetShielded(false);
+
+        if (shieldVisual != null)
+            shieldVisual.SetActive(false);
+    }
+
+    void CreateShieldVisual()
+    {
+        shieldVisual = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        shieldVisual.name = "ShieldBubble";
+        shieldVisual.transform.SetParent(transform, false);
+        shieldVisual.transform.localPosition = Vector3.zero;
+        shieldVisual.transform.localScale = Vector3.one * 2f;
+
+        // Remove collider so it doesn't interfere with physics
+        var col = shieldVisual.GetComponent<Collider>();
+        if (col != null) Object.Destroy(col);
+
+        // Semi-transparent material
+        var renderer = shieldVisual.GetComponent<Renderer>();
+        var mat = new Material(Shader.Find("Standard"));
+        mat.SetFloat("_Mode", 3); // Transparent mode
+        mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+        mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+        mat.SetInt("_ZWrite", 0);
+        mat.DisableKeyword("_ALPHATEST_ON");
+        mat.EnableKeyword("_ALPHABLEND_ON");
+        mat.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+        mat.renderQueue = 3000;
+        mat.color = shieldColor;
+        renderer.material = mat;
+
+        shieldVisual.SetActive(false);
     }
 }

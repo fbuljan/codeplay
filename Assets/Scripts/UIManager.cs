@@ -13,6 +13,7 @@ public class UIManager : MonoBehaviour
 
     TextMeshProUGUI scoreText;
     TextMeshProUGUI healthText;
+    TextMeshProUGUI shieldText;
     TextMeshProUGUI gameOverScoreText;
 
     void Awake()
@@ -42,6 +43,8 @@ public class UIManager : MonoBehaviour
             new Vector2(20, -20), new Vector2(0, 1), new Vector2(0, 1), new Vector2(0, 1));
         healthText = CreateText(hudPanel.transform, "HP: 3", 32, TextAlignmentOptions.TopRight,
             new Vector2(-20, -20), new Vector2(1, 1), new Vector2(1, 1), new Vector2(1, 1));
+        shieldText = CreateText(hudPanel.transform, "SHIELD READY", 24, TextAlignmentOptions.Bottom,
+            new Vector2(0, 20), new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0.5f, 0));
 
         // Game Over Panel
         gameOverPanel = CreatePanel(canvasObj.transform, "GameOverPanel");
@@ -108,5 +111,26 @@ public class UIManager : MonoBehaviour
     {
         if (healthText != null)
             healthText.text = $"HP: {health}";
+    }
+
+    public void UpdateShield(bool isActive, float cooldownRemaining)
+    {
+        if (shieldText == null) return;
+
+        if (isActive)
+        {
+            shieldText.text = "SHIELD ACTIVE";
+            shieldText.color = new Color(0f, 0.8f, 1f);
+        }
+        else if (cooldownRemaining > 0f)
+        {
+            shieldText.text = $"SHIELD {cooldownRemaining:F1}s";
+            shieldText.color = Color.gray;
+        }
+        else
+        {
+            shieldText.text = "SHIELD READY";
+            shieldText.color = Color.white;
+        }
     }
 }
