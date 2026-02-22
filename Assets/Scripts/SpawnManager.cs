@@ -22,7 +22,8 @@ public class SpawnManager : MonoBehaviour
     [SerializeField] GameObject healthPickupPrefab;
 
     [Header("Spawn Settings")]
-    [SerializeField] float spawnDistance = 80f;
+    [SerializeField] float firstSpawnDistance = 30f;
+    [SerializeField] float spawnDistance = 150f;
     [SerializeField] float despawnBehindDistance = 20f;
     [SerializeField] float highObstacleY = 1.5f;
     [SerializeField] float fullLaneBlockerY = 1f;
@@ -98,7 +99,7 @@ public class SpawnManager : MonoBehaviour
 
         if (enabled)
         {
-            nextSegmentZ = playerTransform.position.z + spawnDistance;
+            nextSegmentZ = playerTransform.position.z + firstSpawnDistance;
             spawnQueue.Clear();
             segmentsSinceBreather = 0;
         }
@@ -114,7 +115,7 @@ public class SpawnManager : MonoBehaviour
         if (!spawningEnabled || playerTransform == null) return;
 
         // Generate new segments when needed
-        while (nextSegmentZ < playerTransform.position.z + spawnDistance + 50f)
+        while (nextSegmentZ < playerTransform.position.z + spawnDistance + 100f)
         {
             GenerateSegment();
         }

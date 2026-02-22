@@ -11,12 +11,13 @@ public class PlayerController : MonoBehaviour
     float forwardSpeed = 10f;
 
     [Header("Jump")]
-    [SerializeField] float jumpForce = 10f;
+    [SerializeField] float jumpForce = 14f;
+    [SerializeField] float gravityMultiplier = 2f;
 
-    [Header("Slide")]
-    [SerializeField] float slideDuration = 0.5f;
+    [Header("Slide / Duck")]
     [SerializeField] float slideHeightScale = 0.25f;
     [SerializeField] float slideTransitionSpeed = 20f;
+    [SerializeField] float slamDownSpeed = 30f;
 
     [Header("Shooting")]
     [SerializeField] GameObject projectilePrefab;
@@ -42,9 +43,9 @@ public class PlayerController : MonoBehaviour
     bool jumpRequested;
     bool movementEnabled;
 
-    // Slide state
-    float slideTimer;
+    // Duck / slide state
     bool isSliding;
+    bool isSlamming;
     float targetScaleY = 1f;
 
     // Shooting state
@@ -82,7 +83,6 @@ public class PlayerController : MonoBehaviour
         }
 
         inputProcessor.OnJumpPressed += OnJumpPressed;
-        inputProcessor.OnSlidePressed += OnSlidePressed;
         inputProcessor.OnShootPressed += OnShootPressed;
         inputProcessor.OnShieldPressed += OnShieldPressed;
 
@@ -97,7 +97,6 @@ public class PlayerController : MonoBehaviour
         if (inputProcessor != null)
         {
             inputProcessor.OnJumpPressed -= OnJumpPressed;
-            inputProcessor.OnSlidePressed -= OnSlidePressed;
             inputProcessor.OnShootPressed -= OnShootPressed;
             inputProcessor.OnShieldPressed -= OnShieldPressed;
         }
@@ -112,6 +111,7 @@ public class PlayerController : MonoBehaviour
             rb.velocity = Vector3.zero;
             rb.isKinematic = true;
             jumpRequested = false;
+            isSlamming = false;
             if (isSliding) EndSlide();
             if (isShielded) DeactivateShield();
         }
@@ -123,14 +123,17 @@ public class PlayerController : MonoBehaviour
 
     void OnJumpPressed()
     {
-        if (movementEnabled && !isSliding)
-            jumpRequested = true;
-    }
+        if (!movementEnabled) return;
 
-    void OnSlidePressed()
-    {
-        if (movementEnabled && isGrounded && !isSliding)
-            StartSlide();
+        // Jump from duck — cancel duck and jump
+        if (isSliding)
+            EndSlide();
+
+        // Cancel slam if mid-air
+        if (isSlamming)
+            isSlamming = false;
+
+        jumpRequested = true;
     }
 
     void Update()
@@ -139,11 +142,32 @@ public class PlayerController : MonoBehaviour
 
         CheckGrounded();
 
-        if (isSliding)
+        // Slam landing — start duck when hitting the ground
+        if (isSlamming && isGrounded)
         {
-            slideTimer -= Time.deltaTime;
-            if (slideTimer <= 0f)
-                EndSlide();
+            isSlamming = false;
+            StartSlide();
+        }
+
+        // Hold-based duck: down while held, up when released
+        bool slideHeld = inputProcessor != null && inputProcessor.IsSlideHeld;
+
+        if (slideHeld && !isSliding && !isSlamming)
+        {
+            if (isGrounded)
+            {
+                StartSlide();
+            }
+            else
+            {
+                // Slam down — cancel air time, duck on landing
+                isSlamming = true;
+                rb.velocity = new Vector3(rb.velocity.x, -slamDownSpeed, rb.velocity.z);
+            }
+        }
+        else if (!slideHeld && isSliding)
+        {
+            EndSlide();
         }
 
         UpdateSlideScale();
@@ -174,6 +198,10 @@ public class PlayerController : MonoBehaviour
         if (jumpRequested && isGrounded)
             Jump();
 
+        // Extra gravity for snappier jump arc
+        if (!isGrounded)
+            rb.AddForce(Vector3.up * Physics.gravity.y * (gravityMultiplier - 1f), ForceMode.Acceleration);
+
         jumpRequested = false;
     }
 
@@ -201,7 +229,6 @@ public class PlayerController : MonoBehaviour
     void StartSlide()
     {
         isSliding = true;
-        slideTimer = slideDuration;
         targetScaleY = slideHeightScale;
     }
 
