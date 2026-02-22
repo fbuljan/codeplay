@@ -245,7 +245,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3827be33c01d164393af54ed5121933, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  forwardSpeed: 10
   jumpForce: 6
   slideDuration: 0.5
   slideHeightScale: 0.5
@@ -311,6 +310,7 @@ GameObject:
   m_Component:
   - component: {fileID: 351667399}
   - component: {fileID: 351667401}
+  - component: {fileID: 351667404}
   - component: {fileID: 351667398}
   - component: {fileID: 351667400}
   - component: {fileID: 351667402}
@@ -392,6 +392,7 @@ MonoBehaviour:
   uiManager: {fileID: 351667402}
   playerHealth: {fileID: 138525991}
   spawnManager: {fileID: 351667403}
+  difficultyManager: {fileID: 351667404}
   laneWidth: 3
   segmentLength: 100
   segmentRows: 4
@@ -428,23 +429,46 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   lowObstaclePrefab: {fileID: 8769629811147679277, guid: e9d301f2056d53145aaec668f9d76c82, type: 3}
   highObstaclePrefab: {fileID: 5404080681815178827, guid: 82d78ab08353c894d8de50fc90af2bdf, type: 3}
+  fullLaneBlockerPrefab: {fileID: 5404080681815178827, guid: 9a9ca3eb32b09ce4ab05eeedbc72ceb1, type: 3}
   groundEnemyPrefab: {fileID: 1466547210547639837, guid: 584c29667dcf6dc4abeb88c44435c543, type: 3}
   airEnemyPrefab: {fileID: 1466547210547639837, guid: 9614af710db3d754cafe33cd2aabc465, type: 3}
   coinPrefab: {fileID: 5822013538250851103, guid: 75d1ab619750d7e4abaa8a7b3573a30a, type: 3}
   healthPickupPrefab: {fileID: 5822013538250851103, guid: 2b16f3c420cba2846b0fc870ac5771a2, type: 3}
   spawnDistance: 80
-  minSpawnInterval: 1.5
-  maxSpawnInterval: 3
   despawnBehindDistance: 20
   highObstacleY: 2.25
-  enemySpawnChance: 0.3
-  airEnemySpawnChance: 0.2
+  fullLaneBlockerY: 1
   enemySpawnY: 1
-  coinSpawnChance: 0.4
-  healthPickupSpawnChance: 0.1
   coinY: 1
-  coinZOffset: 5
   poolSize: 10
+--- !u!114 &351667404
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 351667397}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f975fe9026bc8bc40b699a0d8bf8f93c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  rampStartDistance: 50
+  rampEndDistance: 2000
+  startSpeed: 10
+  maxSpeed: 50
+  startMinInterval: 1.5
+  startMaxInterval: 3
+  endMinInterval: 0.6
+  endMaxInterval: 1.2
+  startEnemyChance: 0.3
+  endEnemyChance: 0.55
+  startAirEnemyChance: 0.3
+  endAirEnemyChance: 0.55
+  startCoinChance: 0.4
+  endCoinChance: 0.25
+  startHealthChance: 0.05
+  endHealthChance: 0.08
 --- !u!1 &705507993
 GameObject:
   m_ObjectHideFlags: 0

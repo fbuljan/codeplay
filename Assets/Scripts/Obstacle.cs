@@ -1,10 +1,11 @@
 using UnityEngine;
 
-public enum ObstacleType { Low, High }
+public enum ObstacleType { Low, High, FullLane }
 
 /// <summary>
 /// Obstacle that damages the player on collision.
 /// Low obstacles must be jumped over, high obstacles must be slid under.
+/// FullLane blockers span the entire lane — must lane-switch to dodge (Phase 3).
 /// </summary>
 public class Obstacle : MonoBehaviour
 {

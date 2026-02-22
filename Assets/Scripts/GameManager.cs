@@ -17,6 +17,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] UIManager uiManager;
     [SerializeField] PlayerHealth playerHealth;
     [SerializeField] SpawnManager spawnManager;
+    [SerializeField] DifficultyManager difficultyManager;
 
     [Header("Lane Settings")]
     [SerializeField] float laneWidth = 3f;
@@ -64,11 +65,13 @@ public class GameManager : MonoBehaviour
         SetupPlayer();
         SetupCamera();
         SetupSpawnManager();
+
+        playerController = playerTransform.GetComponent<PlayerController>();
+        SetupDifficultyManager();
     }
 
     void Start()
     {
-        playerController = playerTransform.GetComponent<PlayerController>();
 
         if (playerHealth == null)
             playerHealth = playerTransform.GetComponent<PlayerHealth>();
@@ -124,6 +127,8 @@ public class GameManager : MonoBehaviour
                 }
                 if (spawnManager != null)
                     spawnManager.SetSpawningEnabled(true);
+                if (difficultyManager != null)
+                    difficultyManager.SetActive(true);
                 score = 0;
                 scoreMultiplier = 1f;
                 lastScoredZ = playerTransform.position.z;
@@ -139,6 +144,8 @@ public class GameManager : MonoBehaviour
                     playerController.SetMovementEnabled(false);
                 if (spawnManager != null)
                     spawnManager.SetSpawningEnabled(false);
+                if (difficultyManager != null)
+                    difficultyManager.SetActive(false);
                 break;
         }
 
@@ -280,6 +287,11 @@ public class GameManager : MonoBehaviour
 
         if (spawnManager != null)
             spawnManager.Initialize(playerTransform);
+    }
+
+    void SetupDifficultyManager()
+    {
+        difficultyManager.Initialize(playerTransform, playerController, spawnManager);
     }
 
     void SetupCamera()

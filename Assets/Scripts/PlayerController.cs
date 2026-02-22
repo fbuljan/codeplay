@@ -8,7 +8,7 @@ using UnityEngine;
 public class PlayerController : MonoBehaviour
 {
     [Header("Movement")]
-    [SerializeField] float forwardSpeed = 10f;
+    float forwardSpeed = 10f;
 
     [Header("Jump")]
     [SerializeField] float jumpForce = 10f;
@@ -175,6 +175,11 @@ public class PlayerController : MonoBehaviour
             Jump();
 
         jumpRequested = false;
+    }
+
+    public void SetForwardSpeed(float speed)
+    {
+        forwardSpeed = speed;
     }
 
     void MoveForward()
