@@ -250,6 +250,10 @@ MonoBehaviour:
   slideDuration: 0.5
   slideHeightScale: 0.5
   slideTransitionSpeed: 20
+  projectilePrefab: {fileID: 2689559052771502351, guid: 40b69fd30609f084fbd864036060a7a7, type: 3}
+  shootCooldown: 0.3
+  projectilePoolSize: 10
+  shootOffset: {x: 0, y: 0.5, z: 1}
   groundTolerance: 0.05
   inputProcessor: {fileID: 351667400}
 --- !u!54 &138525990

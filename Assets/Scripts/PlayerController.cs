@@ -18,6 +18,12 @@ public class PlayerController : MonoBehaviour
     [SerializeField] float slideHeightScale = 0.25f;
     [SerializeField] float slideTransitionSpeed = 20f;
 
+    [Header("Shooting")]
+    [SerializeField] GameObject projectilePrefab;
+    [SerializeField] float shootCooldown = 0.3f;
+    [SerializeField] int projectilePoolSize = 10;
+    [SerializeField] Vector3 shootOffset = new(0f, 0.5f, 1f);
+
     [Header("Ground Detection")]
     [SerializeField] float groundTolerance = 0.05f;
 
@@ -35,6 +41,10 @@ public class PlayerController : MonoBehaviour
     float slideTimer;
     bool isSliding;
     float targetScaleY = 1f;
+
+    // Shooting state
+    float shootCooldownTimer;
+    GameObject[] projectilePool;
 
     void Awake()
     {
@@ -60,6 +70,9 @@ public class PlayerController : MonoBehaviour
 
         inputProcessor.OnJumpPressed += OnJumpPressed;
         inputProcessor.OnSlidePressed += OnSlidePressed;
+        inputProcessor.OnShootPressed += OnShootPressed;
+
+        InitProjectilePool();
     }
 
     void OnDestroy()
@@ -68,6 +81,7 @@ public class PlayerController : MonoBehaviour
         {
             inputProcessor.OnJumpPressed -= OnJumpPressed;
             inputProcessor.OnSlidePressed -= OnSlidePressed;
+            inputProcessor.OnShootPressed -= OnShootPressed;
         }
     }
 
@@ -114,6 +128,9 @@ public class PlayerController : MonoBehaviour
         }
 
         UpdateSlideScale();
+
+        if (shootCooldownTimer > 0f)
+            shootCooldownTimer -= Time.deltaTime;
     }
 
     void FixedUpdate()
@@ -176,5 +193,54 @@ public class PlayerController : MonoBehaviour
     void CheckGrounded()
     {
         isGrounded = transform.position.y <= groundY + groundTolerance;
+    }
+
+    // ---- Shooting ----
+
+    void OnShootPressed()
+    {
+        if (!movementEnabled || shootCooldownTimer > 0f) return;
+
+        Shoot();
+        shootCooldownTimer = shootCooldown;
+    }
+
+    void Shoot()
+    {
+        if (projectilePool == null) return;
+
+        GameObject obj = GetInactiveProjectile();
+        if (obj == null) return;
+
+        var projectile = obj.GetComponent<Projectile>();
+        projectile.Fire(transform.position + shootOffset);
+    }
+
+    void InitProjectilePool()
+    {
+        if (projectilePrefab == null)
+        {
+            Debug.LogWarning("[PlayerController] Projectile prefab not assigned — shooting disabled.");
+            return;
+        }
+
+        projectilePool = new GameObject[projectilePoolSize];
+        for (int i = 0; i < projectilePoolSize; i++)
+        {
+            var obj = Instantiate(projectilePrefab);
+            obj.name = $"Projectile_{i}";
+            obj.SetActive(false);
+            projectilePool[i] = obj;
+        }
+    }
+
+    GameObject GetInactiveProjectile()
+    {
+        for (int i = 0; i < projectilePool.Length; i++)
+        {
+            if (!projectilePool[i].activeSelf)
+                return projectilePool[i];
+        }
+        return null;
     }
 }
