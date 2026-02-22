@@ -398,6 +398,9 @@ MonoBehaviour:
   cameraOffset: {x: 0, y: 5, z: -10}
   enemyKillScore: 100
   pointsPerMeter: 1
+  coinScoreBase: 50
+  multiplierIncreasePerCoin: 0.1
+  multiplierIncreasePerKill: 0.25
   groundLayerIndex: 6
 --- !u!114 &351667402
 MonoBehaviour:
@@ -427,6 +430,8 @@ MonoBehaviour:
   highObstaclePrefab: {fileID: 5404080681815178827, guid: 82d78ab08353c894d8de50fc90af2bdf, type: 3}
   groundEnemyPrefab: {fileID: 1466547210547639837, guid: 584c29667dcf6dc4abeb88c44435c543, type: 3}
   airEnemyPrefab: {fileID: 1466547210547639837, guid: 9614af710db3d754cafe33cd2aabc465, type: 3}
+  coinPrefab: {fileID: 5822013538250851103, guid: 75d1ab619750d7e4abaa8a7b3573a30a, type: 3}
+  healthPickupPrefab: {fileID: 5822013538250851103, guid: 2b16f3c420cba2846b0fc870ac5771a2, type: 3}
   spawnDistance: 80
   minSpawnInterval: 1.5
   maxSpawnInterval: 3
@@ -435,6 +440,10 @@ MonoBehaviour:
   enemySpawnChance: 0.3
   airEnemySpawnChance: 0.2
   enemySpawnY: 1
+  coinSpawnChance: 0.4
+  healthPickupSpawnChance: 0.1
+  coinY: 1
+  coinZOffset: 5
   poolSize: 10
 --- !u!1 &705507993
 GameObject:

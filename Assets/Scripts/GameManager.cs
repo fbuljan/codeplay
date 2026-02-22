@@ -29,6 +29,11 @@ public class GameManager : MonoBehaviour
     [Header("Score")]
     [SerializeField] int enemyKillScore = 100;
     [SerializeField] int pointsPerMeter = 1;
+    [SerializeField] int coinScoreBase = 50;
+
+    [Header("Multiplier")]
+    [SerializeField] float multiplierIncreasePerCoin = 0.1f;
+    [SerializeField] float multiplierIncreasePerKill = 0.25f;
 
     [Header("Ground Layer")]
     [Tooltip("Layer index to assign to lane planes (6 = first unused user layer)")]
@@ -41,6 +46,7 @@ public class GameManager : MonoBehaviour
     PlayerController playerController;
     int score;
     float lastScoredZ;
+    float scoreMultiplier = 1f;
 
     void Awake()
     {
@@ -119,9 +125,13 @@ public class GameManager : MonoBehaviour
                 if (spawnManager != null)
                     spawnManager.SetSpawningEnabled(true);
                 score = 0;
+                scoreMultiplier = 1f;
                 lastScoredZ = playerTransform.position.z;
                 if (uiManager != null)
+                {
                     uiManager.UpdateScore(score);
+                    uiManager.UpdateMultiplier(scoreMultiplier);
+                }
                 break;
 
             case GameState.GameOver:
@@ -145,6 +155,11 @@ public class GameManager : MonoBehaviour
     {
         if (uiManager != null)
             uiManager.UpdateHealth(currentHealth);
+
+        // Reset multiplier on damage
+        scoreMultiplier = 1f;
+        if (uiManager != null)
+            uiManager.UpdateMultiplier(scoreMultiplier);
     }
 
     void OnDestroy()
@@ -181,7 +196,7 @@ public class GameManager : MonoBehaviour
         int meters = Mathf.FloorToInt(currentZ - lastScoredZ);
         if (meters > 0)
         {
-            score += meters * pointsPerMeter;
+            score += Mathf.RoundToInt(meters * pointsPerMeter * scoreMultiplier);
             lastScoredZ += meters;
             if (uiManager != null)
                 uiManager.UpdateScore(score);
@@ -191,9 +206,25 @@ public class GameManager : MonoBehaviour
     public void OnEnemyKilled(Enemy enemy)
     {
         if (State != GameState.Playing) return;
-        score += enemyKillScore;
+        score += Mathf.RoundToInt(enemyKillScore * scoreMultiplier);
+        scoreMultiplier += multiplierIncreasePerKill;
         if (uiManager != null)
+        {
             uiManager.UpdateScore(score);
+            uiManager.UpdateMultiplier(scoreMultiplier);
+        }
+    }
+
+    public void OnCoinCollected(Coin coin)
+    {
+        if (State != GameState.Playing) return;
+        score += Mathf.RoundToInt(coinScoreBase * scoreMultiplier);
+        scoreMultiplier += multiplierIncreasePerCoin;
+        if (uiManager != null)
+        {
+            uiManager.UpdateScore(score);
+            uiManager.UpdateMultiplier(scoreMultiplier);
+        }
     }
 
     // ---- Scene Setup (unchanged) ----

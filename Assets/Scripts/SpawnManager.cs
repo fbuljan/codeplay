@@ -16,6 +16,10 @@ public class SpawnManager : MonoBehaviour
     [SerializeField] GameObject groundEnemyPrefab;
     [SerializeField] GameObject airEnemyPrefab;
 
+    [Header("Collectible Prefabs")]
+    [SerializeField] GameObject coinPrefab;
+    [SerializeField] GameObject healthPickupPrefab;
+
     [Header("Spawn Settings")]
     [SerializeField] float spawnDistance = 80f;
     [SerializeField] float minSpawnInterval = 1.5f;
@@ -25,6 +29,10 @@ public class SpawnManager : MonoBehaviour
     [SerializeField] [Range(0f, 1f)] float enemySpawnChance = 0.3f;
     [SerializeField] [Range(0f, 1f)] float airEnemySpawnChance = 0.15f;
     [SerializeField] float enemySpawnY = 1f;
+    [SerializeField] [Range(0f, 1f)] float coinSpawnChance = 0.4f;
+    [SerializeField] [Range(0f, 1f)] float healthPickupSpawnChance = 0.05f;
+    [SerializeField] float coinY = 1f;
+    [SerializeField] float coinZOffset = 5f;
 
     [Header("Pool")]
     [SerializeField] int poolSize = 10;
@@ -37,6 +45,8 @@ public class SpawnManager : MonoBehaviour
     List<GameObject> highPool = new();
     List<GameObject> enemyPool = new();
     List<GameObject> airEnemyPool = new();
+    List<GameObject> coinPool = new();
+    List<GameObject> healthPool = new();
 
     public void Initialize(Transform player)
     {
@@ -45,6 +55,8 @@ public class SpawnManager : MonoBehaviour
         FillPool(highPool, highObstaclePrefab, "HighObstacle", poolSize);
         FillPool(enemyPool, groundEnemyPrefab, "GroundEnemy", poolSize);
         FillPool(airEnemyPool, airEnemyPrefab, "AirEnemy", poolSize / 2);
+        FillPool(coinPool, coinPrefab, "Coin", poolSize);
+        FillPool(healthPool, healthPickupPrefab, "HealthPickup", poolSize / 4);
     }
 
     public void SetSpawningEnabled(bool enabled)
@@ -74,6 +86,13 @@ public class SpawnManager : MonoBehaviour
 
             if (airEnemyPrefab != null && Random.value < airEnemySpawnChance)
                 SpawnAirEnemy();
+
+            // Collectibles spawn offset from the main spawn point
+            if (coinPrefab != null && Random.value < coinSpawnChance)
+                SpawnCoin();
+
+            if (healthPickupPrefab != null && Random.value < healthPickupSpawnChance)
+                SpawnHealthPickup();
 
             nextSpawnZ += Random.Range(minSpawnInterval, maxSpawnInterval) * 10f;
         }
@@ -139,6 +158,24 @@ public class SpawnManager : MonoBehaviour
         obj.SetActive(true);
     }
 
+    void SpawnCoin()
+    {
+        GameObject obj = GetFromPool(coinPool);
+        if (obj == null) return;
+
+        obj.transform.position = new Vector3(0f, coinY, nextSpawnZ + coinZOffset);
+        obj.SetActive(true);
+    }
+
+    void SpawnHealthPickup()
+    {
+        GameObject obj = GetFromPool(healthPool);
+        if (obj == null) return;
+
+        obj.transform.position = new Vector3(0f, coinY, nextSpawnZ + coinZOffset * 2f);
+        obj.SetActive(true);
+    }
+
     List<GameObject> GetObstaclesBetween(float minZ, float maxZ)
     {
         List<GameObject> result = new();
@@ -165,6 +202,8 @@ public class SpawnManager : MonoBehaviour
         RecyclePool(highPool, despawnZ);
         RecyclePool(enemyPool, despawnZ);
         RecyclePool(airEnemyPool, despawnZ);
+        RecyclePool(coinPool, despawnZ);
+        RecyclePool(healthPool, despawnZ);
     }
 
     void RecyclePool(List<GameObject> pool, float despawnZ)
@@ -219,5 +258,7 @@ public class SpawnManager : MonoBehaviour
         foreach (var obj in highPool) obj.SetActive(false);
         foreach (var obj in enemyPool) obj.SetActive(false);
         foreach (var obj in airEnemyPool) obj.SetActive(false);
+        foreach (var obj in coinPool) obj.SetActive(false);
+        foreach (var obj in healthPool) obj.SetActive(false);
     }
 }

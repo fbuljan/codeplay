@@ -82,6 +82,16 @@ public class PlayerHealth : MonoBehaviour
         blinkVisible = true;
     }
 
+    public int MaxHealth => maxHealth;
+
+    public void Heal(int amount)
+    {
+        if (CurrentHealth <= 0) return;
+
+        CurrentHealth = Mathf.Min(maxHealth, CurrentHealth + amount);
+        OnHealthChanged?.Invoke(CurrentHealth);
+    }
+
     public void ResetHealth()
     {
         CurrentHealth = maxHealth;
