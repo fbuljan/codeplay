@@ -26,6 +26,10 @@ public class GameManager : MonoBehaviour
     [Header("Camera")]
     [SerializeField] Vector3 cameraOffset = new(0f, 5f, -10f);
 
+    [Header("Score")]
+    [SerializeField] int enemyKillScore = 100;
+    [SerializeField] int pointsPerMeter = 1;
+
     [Header("Ground Layer")]
     [Tooltip("Layer index to assign to lane planes (6 = first unused user layer)")]
     [SerializeField] int groundLayerIndex = 6;
@@ -35,6 +39,8 @@ public class GameManager : MonoBehaviour
     public float[] LanePositions { get; private set; }
 
     PlayerController playerController;
+    int score;
+    float lastScoredZ;
 
     void Awake()
     {
@@ -80,9 +86,7 @@ public class GameManager : MonoBehaviour
                 break;
 
             case GameState.Playing:
-                // TODO: Remove — temporary kill key for testing GameOver flow
-                if (Input.GetKeyDown(KeyCode.K))
-                    OnPlayerDied();
+                UpdateDistanceScore();
                 break;
 
             case GameState.GameOver:
@@ -114,6 +118,10 @@ public class GameManager : MonoBehaviour
                 }
                 if (spawnManager != null)
                     spawnManager.SetSpawningEnabled(true);
+                score = 0;
+                lastScoredZ = playerTransform.position.z;
+                if (uiManager != null)
+                    uiManager.UpdateScore(score);
                 break;
 
             case GameState.GameOver:
@@ -163,6 +171,29 @@ public class GameManager : MonoBehaviour
             return true;
 
         return false;
+    }
+
+    // ---- Score ----
+
+    void UpdateDistanceScore()
+    {
+        float currentZ = playerTransform.position.z;
+        int meters = Mathf.FloorToInt(currentZ - lastScoredZ);
+        if (meters > 0)
+        {
+            score += meters * pointsPerMeter;
+            lastScoredZ += meters;
+            if (uiManager != null)
+                uiManager.UpdateScore(score);
+        }
+    }
+
+    public void OnEnemyKilled(Enemy enemy)
+    {
+        if (State != GameState.Playing) return;
+        score += enemyKillScore;
+        if (uiManager != null)
+            uiManager.UpdateScore(score);
     }
 
     // ---- Scene Setup (unchanged) ----

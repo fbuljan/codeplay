@@ -164,7 +164,17 @@ public class SpawnManager : MonoBehaviour
             obj.name = $"{baseName}_{i}";
             obj.SetActive(false);
             pool.Add(obj);
+
+            var enemy = obj.GetComponent<Enemy>();
+            if (enemy != null)
+                enemy.OnDestroyed += OnEnemyDestroyed;
         }
+    }
+
+    void OnEnemyDestroyed(Enemy enemy)
+    {
+        if (GameManager.Instance != null)
+            GameManager.Instance.OnEnemyKilled(enemy);
     }
 
     GameObject GetFromPool(List<GameObject> pool)
