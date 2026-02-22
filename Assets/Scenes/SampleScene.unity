@@ -246,7 +246,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   forwardSpeed: 10
-  jumpForce: 10
+  jumpForce: 6
   slideDuration: 0.5
   slideHeightScale: 0.5
   slideTransitionSpeed: 20
@@ -416,11 +416,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   lowObstaclePrefab: {fileID: 8769629811147679277, guid: e9d301f2056d53145aaec668f9d76c82, type: 3}
   highObstaclePrefab: {fileID: 5404080681815178827, guid: 82d78ab08353c894d8de50fc90af2bdf, type: 3}
+  groundEnemyPrefab: {fileID: 1466547210547639837, guid: 584c29667dcf6dc4abeb88c44435c543, type: 3}
   spawnDistance: 80
   minSpawnInterval: 1.5
   maxSpawnInterval: 3
   despawnBehindDistance: 20
   highObstacleY: 2.25
+  enemySpawnChance: 0.5
+  enemySpawnY: 1
   poolSize: 10
 --- !u!1 &705507993
 GameObject:

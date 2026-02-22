@@ -8,9 +8,12 @@ using UnityEngine;
 /// </summary>
 public class SpawnManager : MonoBehaviour
 {
-    [Header("Prefabs")]
+    [Header("Obstacle Prefabs")]
     [SerializeField] GameObject lowObstaclePrefab;
     [SerializeField] GameObject highObstaclePrefab;
+
+    [Header("Enemy Prefabs")]
+    [SerializeField] GameObject groundEnemyPrefab;
 
     [Header("Spawn Settings")]
     [SerializeField] float spawnDistance = 80f;
@@ -18,6 +21,8 @@ public class SpawnManager : MonoBehaviour
     [SerializeField] float maxSpawnInterval = 3f;
     [SerializeField] float despawnBehindDistance = 20f;
     [SerializeField] float highObstacleY = 1.5f;
+    [SerializeField] [Range(0f, 1f)] float enemySpawnChance = 0.3f;
+    [SerializeField] float enemySpawnY = 1f;
 
     [Header("Pool")]
     [SerializeField] int poolSize = 10;
@@ -28,12 +33,14 @@ public class SpawnManager : MonoBehaviour
     float nextSpawnZ;
     List<GameObject> lowPool = new();
     List<GameObject> highPool = new();
+    List<GameObject> enemyPool = new();
 
     public void Initialize(Transform player)
     {
         playerTransform = player;
         FillPool(lowPool, lowObstaclePrefab, "LowObstacle", poolSize);
         FillPool(highPool, highObstaclePrefab, "HighObstacle", poolSize);
+        FillPool(enemyPool, groundEnemyPrefab, "GroundEnemy", poolSize);
     }
 
     public void SetSpawningEnabled(bool enabled)
@@ -41,9 +48,13 @@ public class SpawnManager : MonoBehaviour
         spawningEnabled = enabled;
 
         if (enabled)
+        {
             nextSpawnZ = playerTransform.position.z + spawnDistance;
+        }
         else
+        {
             ReturnAllToPool();
+        }
     }
 
     void Update()
@@ -52,7 +63,11 @@ public class SpawnManager : MonoBehaviour
 
         if (playerTransform.position.z + spawnDistance >= nextSpawnZ)
         {
-            SpawnObstacle();
+            if (groundEnemyPrefab != null && Random.value < enemySpawnChance)
+                SpawnEnemy();
+            else
+                SpawnObstacle();
+
             nextSpawnZ += Random.Range(minSpawnInterval, maxSpawnInterval) * 10f;
         }
 
@@ -81,11 +96,49 @@ public class SpawnManager : MonoBehaviour
         obj.SetActive(true);
     }
 
+    void SpawnEnemy()
+    {
+        GameObject obj = GetFromPool(enemyPool);
+        if (obj == null) return;
+
+        obj.transform.position = new Vector3(0f, enemySpawnY, nextSpawnZ);
+
+        var enemy = obj.GetComponent<GroundEnemy>();
+        if (enemy != null)
+        {
+            enemy.SetPlayerTransform(playerTransform);
+            enemy.Initialize();
+            enemy.SetBlockingObstacles(GetObstaclesBetween(playerTransform.position.z, nextSpawnZ));
+        }
+
+        obj.SetActive(true);
+    }
+
+    List<GameObject> GetObstaclesBetween(float minZ, float maxZ)
+    {
+        List<GameObject> result = new();
+        CollectActiveInRange(lowPool, minZ, maxZ, result);
+        CollectActiveInRange(highPool, minZ, maxZ, result);
+        return result;
+    }
+
+    void CollectActiveInRange(List<GameObject> pool, float minZ, float maxZ, List<GameObject> result)
+    {
+        for (int i = 0; i < pool.Count; i++)
+        {
+            if (!pool[i].activeSelf) continue;
+            float z = pool[i].transform.position.z;
+            if (z > minZ && z < maxZ)
+                result.Add(pool[i]);
+        }
+    }
+
     void RecycleBehindPlayer()
     {
         float despawnZ = playerTransform.position.z - despawnBehindDistance;
         RecyclePool(lowPool, despawnZ);
         RecyclePool(highPool, despawnZ);
+        RecyclePool(enemyPool, despawnZ);
     }
 
     void RecyclePool(List<GameObject> pool, float despawnZ)
@@ -128,5 +181,6 @@ public class SpawnManager : MonoBehaviour
     {
         foreach (var obj in lowPool) obj.SetActive(false);
         foreach (var obj in highPool) obj.SetActive(false);
+        foreach (var obj in enemyPool) obj.SetActive(false);
     }
 }
