@@ -22,7 +22,7 @@ public class InputReader : MonoBehaviour
 
     [Header("Joystick Normalization")]
     [Tooltip("Max absolute value the MCU sends for joystick axes. Used to normalize to -1..1")]
-    [SerializeField] int joystickRange = 512;
+    [SerializeField] int joystickRange = 100;
 
     const int PacketSize = 12; // 6 x int16
     const int FaceButtonCount = 4;

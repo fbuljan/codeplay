@@ -250,10 +250,22 @@ MonoBehaviour:
   slideHeightScale: 0.5
   slideTransitionSpeed: 20
   slamDownSpeed: 30
-  projectilePrefab: {fileID: 2689559052771502351, guid: 40b69fd30609f084fbd864036060a7a7, type: 3}
   shootCooldown: 0.3
-  projectilePoolSize: 10
+  maxShootRange: 100
   shootOffset: {x: 0, y: 0.5, z: 1}
+  tracerDuration: 0.08
+  tracerStartWidth: 0.15
+  tracerEndWidth: 0.05
+  joystickAmplitude: 1
+  joystickLaneThreshold: 0.4
+  joystickHeightThreshold: 0.3
+  reticleDistance: 15
+  groundAimY: 1
+  airAimY: 5
+  tiltAmplitude: 0.2
+  tiltLaneThreshold: 0.4
+  laneSwitchSpeed: 10
+  laneSwitchCooldown: 0.3
   shieldDuration: 1
   shieldCooldown: 3
   shieldColor: {r: 0, g: 0.5, b: 1, a: 0.3}
@@ -338,7 +350,7 @@ MonoBehaviour:
   portName: COM3
   baudRate: 115200
   readTimeoutMs: 50
-  joystickRange: 512
+  joystickRange: 100
 --- !u!4 &351667399
 Transform:
   m_ObjectHideFlags: 0
@@ -366,9 +378,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8b9275b1ea493584ca687f0acaa52f01, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  jumpButtonIndex: 0
+  jumpButtonIndex: 3
   shieldButtonIndex: 1
-  slideButtonIndex: 3
+  slideButtonIndex: 0
   shootButtonIndex: 2
   inputReader: {fileID: 351667398}
 --- !u!114 &351667401

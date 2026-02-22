@@ -35,6 +35,12 @@ public class PlayerController : MonoBehaviour
     [SerializeField] float groundAimY = 1f;
     [SerializeField] float airAimY = 5f;
 
+    [Header("Lane Switching")]
+    [SerializeField] float tiltAmplitude = 0.5f;
+    [SerializeField] float tiltLaneThreshold = 0.5f;
+    [SerializeField] float laneSwitchSpeed = 10f;
+    [SerializeField] float laneSwitchCooldown = 0.3f;
+
     [Header("Shield")]
     [SerializeField] float shieldDuration = 1f;
     [SerializeField] float shieldCooldown = 3f;
@@ -67,6 +73,11 @@ public class PlayerController : MonoBehaviour
     int currentAimLane = 1; // 0=left, 1=center, 2=right
     bool aimingHigh;
     GameObject reticleVisual;
+
+    // Lane switching state
+    int currentLane = 1;
+    float targetLaneX;
+    float laneSwitchCooldownTimer;
 
     // Shield state
     float shieldTimer;
@@ -132,6 +143,8 @@ public class PlayerController : MonoBehaviour
             if (isSliding) EndSlide();
             if (isShielded) DeactivateShield();
             if (reticleVisual != null) reticleVisual.SetActive(false);
+            currentLane = 1;
+            targetLaneX = 0f;
         }
         else
         {
@@ -159,6 +172,7 @@ public class PlayerController : MonoBehaviour
         if (!movementEnabled) return;
 
         UpdateAim();
+        UpdateLaneSwitching();
         CheckGrounded();
 
         // Slam landing — start duck when hitting the ground
@@ -201,6 +215,9 @@ public class PlayerController : MonoBehaviour
                 tracerLine.enabled = false;
         }
 
+        if (laneSwitchCooldownTimer > 0f)
+            laneSwitchCooldownTimer -= Time.deltaTime;
+
         if (shieldCooldownTimer > 0f)
             shieldCooldownTimer -= Time.deltaTime;
 
@@ -240,6 +257,7 @@ public class PlayerController : MonoBehaviour
     {
         Vector3 velocity = rb.velocity;
         velocity.z = forwardSpeed;
+        velocity.x = (targetLaneX - transform.position.x) * laneSwitchSpeed;
         rb.velocity = velocity;
     }
 
@@ -441,6 +459,34 @@ public class PlayerController : MonoBehaviour
             renderer.material.color = aimingHigh
                 ? new Color(0.3f, 0.5f, 1f, 0.6f)
                 : new Color(1f, 0.3f, 0.3f, 0.6f);
+        }
+    }
+
+    // ---- Lane Switching ----
+
+    void UpdateLaneSwitching()
+    {
+        if (inputProcessor == null) return;
+
+        Vector3 tilt = inputProcessor.GetTilt();
+        float amp = Mathf.Max(tiltAmplitude, 0.01f);
+        float nx = Mathf.Clamp(-tilt.x / amp, -1f, 1f);
+
+        int newLane;
+        if (nx < -tiltLaneThreshold)
+            newLane = 0;
+        else if (nx > tiltLaneThreshold)
+            newLane = 2;
+        else
+            newLane = 1;
+
+        if (newLane != currentLane && laneSwitchCooldownTimer <= 0f)
+        {
+            currentLane = newLane;
+            float[] lanes = GameManager.Instance.LanePositions;
+            if (lanes != null && lanes.Length > 0)
+                targetLaneX = lanes[currentLane];
+            laneSwitchCooldownTimer = laneSwitchCooldown;
         }
     }
 
