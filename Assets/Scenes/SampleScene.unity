@@ -135,6 +135,7 @@ GameObject:
   - component: {fileID: 138525987}
   - component: {fileID: 138525986}
   - component: {fileID: 138525989}
+  - component: {fileID: 138525991}
   - component: {fileID: 138525985}
   - component: {fileID: 138525990}
   m_Layer: 0
@@ -275,6 +276,21 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!114 &138525991
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 138525983}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 507e4c5130cd3e245890f5cbadaaf8d8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxHealth: 10
+  invincibilityDuration: 1.5
+  blinkInterval: 0.15
 --- !u!1 &351667397
 GameObject:
   m_ObjectHideFlags: 0
@@ -287,6 +303,7 @@ GameObject:
   - component: {fileID: 351667398}
   - component: {fileID: 351667400}
   - component: {fileID: 351667401}
+  - component: {fileID: 351667402}
   m_Layer: 0
   m_Name: Core
   m_TagString: Untagged
@@ -360,11 +377,26 @@ MonoBehaviour:
   - {fileID: 1018687245}
   - {fileID: 1129389669}
   mainCamera: {fileID: 963194227}
+  inputProcessor: {fileID: 351667400}
+  uiManager: {fileID: 351667402}
+  playerHealth: {fileID: 138525991}
   laneWidth: 3
   segmentLength: 100
   segmentRows: 4
   cameraOffset: {x: 0, y: 5, z: -10}
   groundLayerIndex: 6
+--- !u!114 &351667402
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 351667397}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa1b438b4220a204e82f1b8d2c3c79f7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &705507993
 GameObject:
   m_ObjectHideFlags: 0

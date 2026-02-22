@@ -1,15 +1,21 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
+
+public enum GameState { Menu, Playing, GameOver }
 
 /// <summary>
-/// Owns scene setup: positions lanes, player, and camera programmatically.
-/// Assign references in the inspector, then everything configures itself on Play.
+/// Owns scene setup and game state transitions.
+/// Menu → any button → Playing → health=0 → GameOver → any button → restart.
 /// </summary>
 public class GameManager : MonoBehaviour
 {
     [Header("Scene References")]
     [SerializeField] Transform playerTransform;
-    [SerializeField] GameObject[] lanePlanes = new GameObject[3]; // Left, Center, Right
+    [SerializeField] GameObject[] lanePlanes = new GameObject[3];
     [SerializeField] Camera mainCamera;
+    [SerializeField] InputProcessor inputProcessor;
+    [SerializeField] UIManager uiManager;
+    [SerializeField] PlayerHealth playerHealth;
 
     [Header("Lane Settings")]
     [SerializeField] float laneWidth = 3f;
@@ -23,13 +29,16 @@ public class GameManager : MonoBehaviour
     [Tooltip("Layer index to assign to lane planes (6 = first unused user layer)")]
     [SerializeField] int groundLayerIndex = 6;
 
-    /// <summary>
-    /// Lane X positions, indexed 0=Left, 1=Center, 2=Right.
-    /// </summary>
+    public static GameManager Instance { get; private set; }
+    public GameState State { get; private set; }
     public float[] LanePositions { get; private set; }
+
+    PlayerController playerController;
 
     void Awake()
     {
+        Instance = this;
+
         LanePositions = new float[]
         {
             -laneWidth,
@@ -43,9 +52,117 @@ public class GameManager : MonoBehaviour
         SetupCamera();
     }
 
+    void Start()
+    {
+        playerController = playerTransform.GetComponent<PlayerController>();
+
+        if (playerHealth == null)
+            playerHealth = playerTransform.GetComponent<PlayerHealth>();
+
+        if (playerHealth != null)
+        {
+            playerHealth.OnHealthChanged += OnHealthChanged;
+            playerHealth.OnDied += OnPlayerDied;
+        }
+
+        SetState(GameState.Menu);
+    }
+
+    void Update()
+    {
+        switch (State)
+        {
+            case GameState.Menu:
+                if (AnyButtonPressed())
+                    SetState(GameState.Playing);
+                break;
+
+            case GameState.Playing:
+                // TODO: Remove — temporary kill key for testing GameOver flow
+                if (Input.GetKeyDown(KeyCode.K))
+                    OnPlayerDied();
+                break;
+
+            case GameState.GameOver:
+                if (AnyButtonPressed())
+                    RestartGame();
+                break;
+        }
+    }
+
+    public void SetState(GameState newState)
+    {
+        State = newState;
+
+        switch (newState)
+        {
+            case GameState.Menu:
+                if (playerController != null)
+                    playerController.SetMovementEnabled(false);
+                break;
+
+            case GameState.Playing:
+                if (playerController != null)
+                    playerController.SetMovementEnabled(true);
+                if (playerHealth != null)
+                {
+                    playerHealth.ResetHealth();
+                    if (uiManager != null)
+                        uiManager.UpdateHealth(playerHealth.CurrentHealth);
+                }
+                break;
+
+            case GameState.GameOver:
+                if (playerController != null)
+                    playerController.SetMovementEnabled(false);
+                break;
+        }
+
+        if (uiManager != null)
+            uiManager.OnGameStateChanged(newState);
+    }
+
+    public void OnPlayerDied()
+    {
+        SetState(GameState.GameOver);
+    }
+
+    void OnHealthChanged(int currentHealth)
+    {
+        if (uiManager != null)
+            uiManager.UpdateHealth(currentHealth);
+    }
+
+    void OnDestroy()
+    {
+        if (playerHealth != null)
+        {
+            playerHealth.OnHealthChanged -= OnHealthChanged;
+            playerHealth.OnDied -= OnPlayerDied;
+        }
+    }
+
+    void RestartGame()
+    {
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+    }
+
+    bool AnyButtonPressed()
+    {
+        if (inputProcessor == null) return false;
+
+        // Check if any face button was just pressed this frame
+        if (inputProcessor.IsJumpHeld || inputProcessor.IsSlideHeld ||
+            inputProcessor.IsShootHeld || inputProcessor.IsShieldHeld)
+            return true;
+
+        return false;
+    }
+
+    // ---- Scene Setup (unchanged) ----
+
     void SetupLanes()
     {
-        // Unity's default plane is 10x10 units, so scale = desired size / 10
         Vector3 planeScale = new(laneWidth / 10f, 1f, segmentLength / 10f);
 
         for (int i = 0; i < lanePlanes.Length; i++)
@@ -79,13 +196,11 @@ public class GameManager : MonoBehaviour
             return;
         }
 
-        // Get capsule height to position correctly on ground
-        float playerHeight = 1f; // default half-height
+        float playerHeight = 1f;
         var capsule = playerTransform.GetComponent<CapsuleCollider>();
         if (capsule != null)
             playerHeight = capsule.height / 2f;
 
-        // Center lane, sitting on ground, facing +Z
         playerTransform.position = new Vector3(0f, playerHeight, 0f);
         playerTransform.rotation = Quaternion.identity;
     }
@@ -93,9 +208,7 @@ public class GameManager : MonoBehaviour
     void SetupCamera()
     {
         if (mainCamera == null)
-        {
             mainCamera = Camera.main;
-        }
 
         if (mainCamera == null)
         {
@@ -103,14 +216,12 @@ public class GameManager : MonoBehaviour
             return;
         }
 
-        // Position behind and above player
         mainCamera.transform.position = playerTransform.position + cameraOffset;
         mainCamera.transform.LookAt(playerTransform);
     }
 
     void LateUpdate()
     {
-        // Simple camera follow
         if (mainCamera != null && playerTransform != null)
         {
             mainCamera.transform.position = playerTransform.position + cameraOffset;

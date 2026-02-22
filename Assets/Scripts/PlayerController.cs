@@ -2,7 +2,7 @@ using UnityEngine;
 
 /// <summary>
 /// Controls player movement: automatic forward movement and jumping.
-/// Phase 1: Only supports jumping with ground detection.
+/// Movement can be enabled/disabled by GameManager for state transitions.
 /// </summary>
 [RequireComponent(typeof(Rigidbody))]
 public class PlayerController : MonoBehaviour
@@ -24,6 +24,7 @@ public class PlayerController : MonoBehaviour
     float groundY;
     bool isGrounded;
     bool jumpRequested;
+    bool movementEnabled;
 
     void Awake()
     {
@@ -33,7 +34,6 @@ public class PlayerController : MonoBehaviour
         rb.interpolation = RigidbodyInterpolation.Interpolate;
         rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
 
-        // Record starting height as ground level
         groundY = transform.position.y;
     }
 
@@ -57,18 +57,38 @@ public class PlayerController : MonoBehaviour
             inputProcessor.OnJumpPressed -= OnJumpPressed;
     }
 
+    public void SetMovementEnabled(bool enabled)
+    {
+        movementEnabled = enabled;
+
+        if (!enabled)
+        {
+            rb.velocity = Vector3.zero;
+            rb.isKinematic = true;
+            jumpRequested = false;
+        }
+        else
+        {
+            rb.isKinematic = false;
+        }
+    }
+
     void OnJumpPressed()
     {
-        jumpRequested = true;
+        if (movementEnabled)
+            jumpRequested = true;
     }
 
     void Update()
     {
-        CheckGrounded();
+        if (movementEnabled)
+            CheckGrounded();
     }
 
     void FixedUpdate()
     {
+        if (!movementEnabled) return;
+
         MoveForward();
 
         if (jumpRequested && isGrounded)
