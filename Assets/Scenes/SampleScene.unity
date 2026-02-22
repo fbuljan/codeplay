@@ -247,6 +247,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   forwardSpeed: 10
   jumpForce: 10
+  slideDuration: 0.5
+  slideHeightScale: 0.5
+  slideTransitionSpeed: 20
   groundTolerance: 0.05
   inputProcessor: {fileID: 351667400}
 --- !u!54 &138525990
@@ -356,8 +359,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   jumpButtonIndex: 0
   shieldButtonIndex: 1
-  slideButtonIndex: 2
-  shootButtonIndex: 3
+  slideButtonIndex: 3
+  shootButtonIndex: 2
   inputReader: {fileID: 351667398}
 --- !u!114 &351667401
 MonoBehaviour:
