@@ -123,7 +123,8 @@ MonoBehaviour:
   maxHealth: 1
   hoverHeight: 5
   xOffset: 4
+  zOffset: 15
   despawnTime: 100
-  shootInterval: 2
+  shootInterval: 3
   projectilePrefab: {fileID: 2689559052771502351, guid: a7273e68e76a68a4b9dcaf9ef30f39be, type: 3}
   projectilePoolSize: 5

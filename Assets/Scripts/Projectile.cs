@@ -12,6 +12,7 @@ public class Projectile : MonoBehaviour
     [SerializeField] float maxRange = 100f;
 
     float spawnZ;
+    Vector3 moveDirection;
 
     void Awake()
     {
@@ -22,14 +23,21 @@ public class Projectile : MonoBehaviour
 
     public void Fire(Vector3 position)
     {
+        Fire(position, Vector3.forward);
+    }
+
+    public void Fire(Vector3 position, Vector3 direction)
+    {
         transform.position = position;
+        moveDirection = direction.normalized;
         spawnZ = position.z;
+        transform.rotation = Quaternion.LookRotation(moveDirection);
         gameObject.SetActive(true);
     }
 
     void Update()
     {
-        transform.position += Vector3.forward * (speed * Time.deltaTime);
+        transform.position += moveDirection * (speed * Time.deltaTime);
 
         if (transform.position.z - spawnZ > maxRange)
             gameObject.SetActive(false);

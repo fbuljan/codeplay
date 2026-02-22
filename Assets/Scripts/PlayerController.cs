@@ -20,10 +20,20 @@ public class PlayerController : MonoBehaviour
     [SerializeField] float slamDownSpeed = 30f;
 
     [Header("Shooting")]
-    [SerializeField] GameObject projectilePrefab;
     [SerializeField] float shootCooldown = 0.3f;
-    [SerializeField] int projectilePoolSize = 10;
+    [SerializeField] float maxShootRange = 100f;
     [SerializeField] Vector3 shootOffset = new(0f, 0.5f, 1f);
+    [SerializeField] float tracerDuration = 0.08f;
+    [SerializeField] float tracerStartWidth = 0.15f;
+    [SerializeField] float tracerEndWidth = 0.05f;
+
+    [Header("Aiming")]
+    [SerializeField] float joystickAmplitude = 0.2f;
+    [SerializeField] float joystickLaneThreshold = 0.4f;
+    [SerializeField] float joystickHeightThreshold = 0.3f;
+    [SerializeField] float reticleDistance = 15f;
+    [SerializeField] float groundAimY = 1f;
+    [SerializeField] float airAimY = 5f;
 
     [Header("Shield")]
     [SerializeField] float shieldDuration = 1f;
@@ -50,7 +60,13 @@ public class PlayerController : MonoBehaviour
 
     // Shooting state
     float shootCooldownTimer;
-    GameObject[] projectilePool;
+    LineRenderer tracerLine;
+    float tracerTimer;
+
+    // Aiming state
+    int currentAimLane = 1; // 0=left, 1=center, 2=right
+    bool aimingHigh;
+    GameObject reticleVisual;
 
     // Shield state
     float shieldTimer;
@@ -88,8 +104,9 @@ public class PlayerController : MonoBehaviour
 
         playerHealth = GetComponent<PlayerHealth>();
         uiManager = FindObjectOfType<UIManager>();
-        InitProjectilePool();
+        CreateTracer();
         CreateShieldVisual();
+        CreateReticle();
     }
 
     void OnDestroy()
@@ -114,6 +131,7 @@ public class PlayerController : MonoBehaviour
             isSlamming = false;
             if (isSliding) EndSlide();
             if (isShielded) DeactivateShield();
+            if (reticleVisual != null) reticleVisual.SetActive(false);
         }
         else
         {
@@ -140,6 +158,7 @@ public class PlayerController : MonoBehaviour
     {
         if (!movementEnabled) return;
 
+        UpdateAim();
         CheckGrounded();
 
         // Slam landing — start duck when hitting the ground
@@ -174,6 +193,13 @@ public class PlayerController : MonoBehaviour
 
         if (shootCooldownTimer > 0f)
             shootCooldownTimer -= Time.deltaTime;
+
+        if (tracerTimer > 0f)
+        {
+            tracerTimer -= Time.deltaTime;
+            if (tracerTimer <= 0f && tracerLine != null)
+                tracerLine.enabled = false;
+        }
 
         if (shieldCooldownTimer > 0f)
             shieldCooldownTimer -= Time.deltaTime;
@@ -271,41 +297,151 @@ public class PlayerController : MonoBehaviour
 
     void Shoot()
     {
-        if (projectilePool == null) return;
+        float aimX = GetAimLaneX();
+        float aimY = GetAimY();
+        Vector3 origin = transform.position + shootOffset;
 
-        GameObject obj = GetInactiveProjectile();
-        if (obj == null) return;
+        // Cast a box straight forward along the aimed lane corridor
+        Vector3 castOrigin = new Vector3(aimX, aimY, origin.z);
+        Vector3 halfExtents = new Vector3(1f, 2f, 0.1f); // 2 wide, 4 tall
 
-        var projectile = obj.GetComponent<Projectile>();
-        projectile.Fire(transform.position + shootOffset);
+        RaycastHit[] hits = Physics.BoxCastAll(
+            castOrigin, halfExtents, Vector3.forward,
+            Quaternion.identity, maxShootRange,
+            Physics.DefaultRaycastLayers, QueryTriggerInteraction.Collide
+        );
+        System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+
+        Vector3 hitPos = new Vector3(aimX, aimY, origin.z + maxShootRange);
+
+        foreach (var hit in hits)
+        {
+            var enemy = hit.collider.GetComponent<Enemy>();
+            if (enemy != null)
+            {
+                enemy.TakeDamage();
+                hitPos = enemy.transform.position;
+                break;
+            }
+
+            var obstacle = hit.collider.GetComponent<Obstacle>();
+            if (obstacle != null)
+            {
+                hitPos = obstacle.transform.position;
+                break;
+            }
+        }
+
+        ShowTracer(origin, hitPos);
     }
 
-    void InitProjectilePool()
+    void CreateTracer()
     {
-        if (projectilePrefab == null)
-        {
-            Debug.LogWarning("[PlayerController] Projectile prefab not assigned — shooting disabled.");
-            return;
-        }
-
-        projectilePool = new GameObject[projectilePoolSize];
-        for (int i = 0; i < projectilePoolSize; i++)
-        {
-            var obj = Instantiate(projectilePrefab);
-            obj.name = $"Projectile_{i}";
-            obj.SetActive(false);
-            projectilePool[i] = obj;
-        }
+        var obj = new GameObject("ShootTracer");
+        tracerLine = obj.AddComponent<LineRenderer>();
+        tracerLine.positionCount = 2;
+        tracerLine.startWidth = tracerStartWidth;
+        tracerLine.endWidth = tracerEndWidth;
+        tracerLine.material = new Material(Shader.Find("Unlit/Color"));
+        tracerLine.material.color = Color.yellow;
+        tracerLine.enabled = false;
     }
 
-    GameObject GetInactiveProjectile()
+    void ShowTracer(Vector3 from, Vector3 to)
     {
-        for (int i = 0; i < projectilePool.Length; i++)
+        if (tracerLine == null) return;
+        tracerLine.SetPosition(0, from);
+        tracerLine.SetPosition(1, to);
+        tracerLine.enabled = true;
+        tracerTimer = tracerDuration;
+    }
+
+    // ---- Aiming ----
+
+    void UpdateAim()
+    {
+        if (inputProcessor == null) return;
+
+        Vector2 joystick = inputProcessor.GetJoystick();
+        float amp = Mathf.Max(joystickAmplitude, 0.01f);
+        float nx = Mathf.Clamp(joystick.x / amp, -1f, 1f);
+        float ny = Mathf.Clamp(joystick.y / amp, -1f, 1f);
+
+        if (nx < -joystickLaneThreshold)
+            currentAimLane = 0;
+        else if (nx > joystickLaneThreshold)
+            currentAimLane = 2;
+        else
+            currentAimLane = 1;
+
+        aimingHigh = ny > joystickHeightThreshold;
+
+        UpdateReticle();
+    }
+
+    float GetAimLaneX()
+    {
+        float[] lanes = GameManager.Instance.LanePositions;
+        if (lanes == null || lanes.Length == 0) return 0f;
+        return lanes[currentAimLane];
+    }
+
+    float GetAimY()
+    {
+        return aimingHigh ? airAimY : groundAimY;
+    }
+
+    void CreateReticle()
+    {
+        reticleVisual = GameObject.CreatePrimitive(PrimitiveType.Quad);
+        reticleVisual.name = "AimReticle";
+
+        var col = reticleVisual.GetComponent<Collider>();
+        if (col != null) Object.Destroy(col);
+
+        reticleVisual.transform.localScale = new Vector3(1.5f, 1.5f, 1f);
+        reticleVisual.transform.rotation = Quaternion.Euler(0, 0, 45); // diamond shape
+
+        var renderer = reticleVisual.GetComponent<Renderer>();
+        var mat = new Material(Shader.Find("Standard"));
+        mat.SetFloat("_Mode", 3);
+        mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+        mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+        mat.SetInt("_ZWrite", 0);
+        mat.DisableKeyword("_ALPHATEST_ON");
+        mat.EnableKeyword("_ALPHABLEND_ON");
+        mat.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+        mat.renderQueue = 3000;
+        mat.color = new Color(1f, 0.3f, 0.3f, 0.6f);
+        renderer.material = mat;
+
+        reticleVisual.SetActive(false);
+    }
+
+    void UpdateReticle()
+    {
+        if (reticleVisual == null) return;
+
+        if (!reticleVisual.activeSelf)
+            reticleVisual.SetActive(true);
+
+        float targetX = GetAimLaneX();
+        float targetY = GetAimY();
+
+        reticleVisual.transform.position = new Vector3(
+            targetX,
+            targetY,
+            transform.position.z + reticleDistance
+        );
+
+        // Color: red for ground, blue for air
+        var renderer = reticleVisual.GetComponent<Renderer>();
+        if (renderer != null)
         {
-            if (!projectilePool[i].activeSelf)
-                return projectilePool[i];
+            renderer.material.color = aimingHigh
+                ? new Color(0.3f, 0.5f, 1f, 0.6f)
+                : new Color(1f, 0.3f, 0.3f, 0.6f);
         }
-        return null;
     }
 
     // ---- Shield ----

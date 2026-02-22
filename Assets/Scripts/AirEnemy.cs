@@ -29,6 +29,11 @@ public class AirEnemy : Enemy
         playerTransform = player;
     }
 
+    public void SetLane(float laneX)
+    {
+        xOffset = laneX;
+    }
+
     public override void Initialize()
     {
         base.Initialize();

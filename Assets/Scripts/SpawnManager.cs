@@ -521,12 +521,14 @@ public class SpawnManager : MonoBehaviour
         GameObject obj = GetFromPool(airEnemyPool);
         if (obj == null) return;
 
-        obj.transform.position = new Vector3(0f, 5f, playerTransform.position.z);
+        float laneX = PickLaneX();
+        obj.transform.position = new Vector3(laneX, 5f, playerTransform.position.z);
 
         var airEnemy = obj.GetComponent<AirEnemy>();
         if (airEnemy != null)
         {
             airEnemy.SetPlayerTransform(playerTransform);
+            airEnemy.SetLane(laneX);
             airEnemy.Initialize();
         }
 
