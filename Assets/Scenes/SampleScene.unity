@@ -303,10 +303,11 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 351667399}
+  - component: {fileID: 351667401}
   - component: {fileID: 351667398}
   - component: {fileID: 351667400}
-  - component: {fileID: 351667401}
   - component: {fileID: 351667402}
+  - component: {fileID: 351667403}
   m_Layer: 0
   m_Name: Core
   m_TagString: Untagged
@@ -383,6 +384,7 @@ MonoBehaviour:
   inputProcessor: {fileID: 351667400}
   uiManager: {fileID: 351667402}
   playerHealth: {fileID: 138525991}
+  spawnManager: {fileID: 351667403}
   laneWidth: 3
   segmentLength: 100
   segmentRows: 4
@@ -400,6 +402,26 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aa1b438b4220a204e82f1b8d2c3c79f7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &351667403
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 351667397}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4ab39405357f9314bacb0aad6091290e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  lowObstaclePrefab: {fileID: 8769629811147679277, guid: e9d301f2056d53145aaec668f9d76c82, type: 3}
+  highObstaclePrefab: {fileID: 5404080681815178827, guid: 82d78ab08353c894d8de50fc90af2bdf, type: 3}
+  spawnDistance: 80
+  minSpawnInterval: 1.5
+  maxSpawnInterval: 3
+  despawnBehindDistance: 20
+  highObstacleY: 2.25
+  poolSize: 10
 --- !u!1 &705507993
 GameObject:
   m_ObjectHideFlags: 0
@@ -487,7 +509,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 705507993}
   m_LocalRotation: {x: 0.40821788, y: -0.23456968, z: 0.10938163, w: 0.8754261}
-  m_LocalPosition: {x: 0, y: 3, z: 0}
+  m_LocalPosition: {x: 0, y: 50.6, z: -68.3}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -599,7 +621,7 @@ GameObject:
   - component: {fileID: 1018687247}
   - component: {fileID: 1018687246}
   m_Layer: 6
-  m_Name: Plane
+  m_Name: MainPlane
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -705,7 +727,7 @@ GameObject:
   - component: {fileID: 1129389671}
   - component: {fileID: 1129389670}
   m_Layer: 6
-  m_Name: Plane (2)
+  m_Name: SidePlane2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -811,7 +833,7 @@ GameObject:
   - component: {fileID: 2097188098}
   - component: {fileID: 2097188097}
   m_Layer: 6
-  m_Name: Plane (1)
+  m_Name: SidePlane1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

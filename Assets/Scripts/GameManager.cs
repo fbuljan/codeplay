@@ -16,6 +16,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] InputProcessor inputProcessor;
     [SerializeField] UIManager uiManager;
     [SerializeField] PlayerHealth playerHealth;
+    [SerializeField] SpawnManager spawnManager;
 
     [Header("Lane Settings")]
     [SerializeField] float laneWidth = 3f;
@@ -50,6 +51,7 @@ public class GameManager : MonoBehaviour
         SetupGroundScroller();
         SetupPlayer();
         SetupCamera();
+        SetupSpawnManager();
     }
 
     void Start()
@@ -110,11 +112,15 @@ public class GameManager : MonoBehaviour
                     if (uiManager != null)
                         uiManager.UpdateHealth(playerHealth.CurrentHealth);
                 }
+                if (spawnManager != null)
+                    spawnManager.SetSpawningEnabled(true);
                 break;
 
             case GameState.GameOver:
                 if (playerController != null)
                     playerController.SetMovementEnabled(false);
+                if (spawnManager != null)
+                    spawnManager.SetSpawningEnabled(false);
                 break;
         }
 
@@ -203,6 +209,15 @@ public class GameManager : MonoBehaviour
 
         playerTransform.position = new Vector3(0f, playerHeight, 0f);
         playerTransform.rotation = Quaternion.identity;
+    }
+
+    void SetupSpawnManager()
+    {
+        if (spawnManager == null)
+            spawnManager = GetComponent<SpawnManager>();
+
+        if (spawnManager != null)
+            spawnManager.Initialize(playerTransform);
     }
 
     void SetupCamera()
