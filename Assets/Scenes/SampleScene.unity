@@ -254,6 +254,9 @@ MonoBehaviour:
   shootCooldown: 0.3
   projectilePoolSize: 10
   shootOffset: {x: 0, y: 0.5, z: 1}
+  shieldDuration: 1
+  shieldCooldown: 3
+  shieldColor: {r: 0, g: 0.5, b: 1, a: 0.3}
   groundTolerance: 0.05
   inputProcessor: {fileID: 351667400}
 --- !u!54 &138525990
@@ -393,6 +396,8 @@ MonoBehaviour:
   segmentLength: 100
   segmentRows: 4
   cameraOffset: {x: 0, y: 5, z: -10}
+  enemyKillScore: 100
+  pointsPerMeter: 1
   groundLayerIndex: 6
 --- !u!114 &351667402
 MonoBehaviour:
@@ -421,12 +426,14 @@ MonoBehaviour:
   lowObstaclePrefab: {fileID: 8769629811147679277, guid: e9d301f2056d53145aaec668f9d76c82, type: 3}
   highObstaclePrefab: {fileID: 5404080681815178827, guid: 82d78ab08353c894d8de50fc90af2bdf, type: 3}
   groundEnemyPrefab: {fileID: 1466547210547639837, guid: 584c29667dcf6dc4abeb88c44435c543, type: 3}
+  airEnemyPrefab: {fileID: 1466547210547639837, guid: 9614af710db3d754cafe33cd2aabc465, type: 3}
   spawnDistance: 80
   minSpawnInterval: 1.5
   maxSpawnInterval: 3
   despawnBehindDistance: 20
   highObstacleY: 2.25
-  enemySpawnChance: 0.5
+  enemySpawnChance: 0.3
+  airEnemySpawnChance: 0.2
   enemySpawnY: 1
   poolSize: 10
 --- !u!1 &705507993

@@ -14,6 +14,7 @@ public class SpawnManager : MonoBehaviour
 
     [Header("Enemy Prefabs")]
     [SerializeField] GameObject groundEnemyPrefab;
+    [SerializeField] GameObject airEnemyPrefab;
 
     [Header("Spawn Settings")]
     [SerializeField] float spawnDistance = 80f;
@@ -22,6 +23,7 @@ public class SpawnManager : MonoBehaviour
     [SerializeField] float despawnBehindDistance = 20f;
     [SerializeField] float highObstacleY = 1.5f;
     [SerializeField] [Range(0f, 1f)] float enemySpawnChance = 0.3f;
+    [SerializeField] [Range(0f, 1f)] float airEnemySpawnChance = 0.15f;
     [SerializeField] float enemySpawnY = 1f;
 
     [Header("Pool")]
@@ -34,6 +36,7 @@ public class SpawnManager : MonoBehaviour
     List<GameObject> lowPool = new();
     List<GameObject> highPool = new();
     List<GameObject> enemyPool = new();
+    List<GameObject> airEnemyPool = new();
 
     public void Initialize(Transform player)
     {
@@ -41,6 +44,7 @@ public class SpawnManager : MonoBehaviour
         FillPool(lowPool, lowObstaclePrefab, "LowObstacle", poolSize);
         FillPool(highPool, highObstaclePrefab, "HighObstacle", poolSize);
         FillPool(enemyPool, groundEnemyPrefab, "GroundEnemy", poolSize);
+        FillPool(airEnemyPool, airEnemyPrefab, "AirEnemy", poolSize / 2);
     }
 
     public void SetSpawningEnabled(bool enabled)
@@ -64,9 +68,12 @@ public class SpawnManager : MonoBehaviour
         if (playerTransform.position.z + spawnDistance >= nextSpawnZ)
         {
             if (groundEnemyPrefab != null && Random.value < enemySpawnChance)
-                SpawnEnemy();
+                SpawnGroundEnemy();
             else
                 SpawnObstacle();
+
+            if (airEnemyPrefab != null && Random.value < airEnemySpawnChance)
+                SpawnAirEnemy();
 
             nextSpawnZ += Random.Range(minSpawnInterval, maxSpawnInterval) * 10f;
         }
@@ -96,7 +103,7 @@ public class SpawnManager : MonoBehaviour
         obj.SetActive(true);
     }
 
-    void SpawnEnemy()
+    void SpawnGroundEnemy()
     {
         GameObject obj = GetFromPool(enemyPool);
         if (obj == null) return;
@@ -109,6 +116,24 @@ public class SpawnManager : MonoBehaviour
             enemy.SetPlayerTransform(playerTransform);
             enemy.Initialize();
             enemy.SetBlockingObstacles(GetObstaclesBetween(playerTransform.position.z, nextSpawnZ));
+        }
+
+        obj.SetActive(true);
+    }
+
+    void SpawnAirEnemy()
+    {
+        GameObject obj = GetFromPool(airEnemyPool);
+        if (obj == null) return;
+
+        // Position at player Z — AirEnemy.Update will keep it following
+        obj.transform.position = new Vector3(0f, 5f, playerTransform.position.z);
+
+        var airEnemy = obj.GetComponent<AirEnemy>();
+        if (airEnemy != null)
+        {
+            airEnemy.SetPlayerTransform(playerTransform);
+            airEnemy.Initialize();
         }
 
         obj.SetActive(true);
@@ -139,6 +164,7 @@ public class SpawnManager : MonoBehaviour
         RecyclePool(lowPool, despawnZ);
         RecyclePool(highPool, despawnZ);
         RecyclePool(enemyPool, despawnZ);
+        RecyclePool(airEnemyPool, despawnZ);
     }
 
     void RecyclePool(List<GameObject> pool, float despawnZ)
@@ -192,5 +218,6 @@ public class SpawnManager : MonoBehaviour
         foreach (var obj in lowPool) obj.SetActive(false);
         foreach (var obj in highPool) obj.SetActive(false);
         foreach (var obj in enemyPool) obj.SetActive(false);
+        foreach (var obj in airEnemyPool) obj.SetActive(false);
     }
 }
