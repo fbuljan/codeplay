@@ -45,7 +45,9 @@ public class GameManager : MonoBehaviour
     public float[] LanePositions { get; private set; }
 
     PlayerController playerController;
+    InputReader inputReader;
     int score;
+    int highScore;
     float lastScoredZ;
     float scoreMultiplier = 1f;
 
@@ -72,7 +74,6 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
-
         if (playerHealth == null)
             playerHealth = playerTransform.GetComponent<PlayerHealth>();
 
@@ -81,6 +82,26 @@ public class GameManager : MonoBehaviour
             playerHealth.OnHealthChanged += OnHealthChanged;
             playerHealth.OnDied += OnPlayerDied;
         }
+
+        // Find InputReader for reconnect
+        if (inputProcessor != null)
+            inputReader = FindObjectOfType<InputReader>();
+
+        // Load saved settings
+        highScore = PlayerPrefs.GetInt("HighScore", 0);
+        string savedPort = PlayerPrefs.GetString("PortName", "COM3");
+        int savedBaud = PlayerPrefs.GetInt("BaudRate", 115200);
+
+        if (uiManager != null)
+        {
+            uiManager.SetPortName(savedPort);
+            uiManager.SetBaudRate(savedBaud);
+            uiManager.UpdateHighScore(highScore);
+            uiManager.OnSettingsChanged += TryReconnectSerial;
+        }
+
+        // Try connecting with saved settings on startup
+        TryReconnectSerial();
 
         SetState(GameState.Menu);
     }
@@ -117,6 +138,7 @@ public class GameManager : MonoBehaviour
                 break;
 
             case GameState.Playing:
+                ApplySerialSettings();
                 if (playerController != null)
                     playerController.SetMovementEnabled(true);
                 if (playerHealth != null)
@@ -146,6 +168,7 @@ public class GameManager : MonoBehaviour
                     spawnManager.SetSpawningEnabled(false);
                 if (difficultyManager != null)
                     difficultyManager.SetActive(false);
+                CheckHighScore();
                 break;
         }
 
@@ -176,6 +199,9 @@ public class GameManager : MonoBehaviour
             playerHealth.OnHealthChanged -= OnHealthChanged;
             playerHealth.OnDied -= OnPlayerDied;
         }
+
+        if (uiManager != null)
+            uiManager.OnSettingsChanged -= TryReconnectSerial;
     }
 
     void RestartGame()
@@ -231,6 +257,46 @@ public class GameManager : MonoBehaviour
         {
             uiManager.UpdateScore(score);
             uiManager.UpdateMultiplier(scoreMultiplier);
+        }
+    }
+
+    // ---- Settings & High Score ----
+
+    void TryReconnectSerial()
+    {
+        if (uiManager == null || inputReader == null) return;
+
+        string port = uiManager.GetPortName();
+        int baud = uiManager.GetBaudRate();
+
+        if (string.IsNullOrWhiteSpace(port) || baud <= 0) return;
+
+        PlayerPrefs.SetString("PortName", port);
+        PlayerPrefs.SetInt("BaudRate", baud);
+        PlayerPrefs.Save();
+
+        var (success, message) = inputReader.Reconnect(port, baud);
+        uiManager.UpdateConnectionStatus(message, success);
+    }
+
+    void ApplySerialSettings()
+    {
+        TryReconnectSerial();
+    }
+
+    void CheckHighScore()
+    {
+        if (score > highScore)
+        {
+            highScore = score;
+            PlayerPrefs.SetInt("HighScore", highScore);
+            PlayerPrefs.Save();
+
+            if (uiManager != null)
+            {
+                uiManager.UpdateHighScore(highScore);
+                uiManager.ShowNewHighScore();
+            }
         }
     }
 

@@ -161,5 +161,46 @@ public class InputReader : MonoBehaviour
         Tilt = new Vector3(tiltX, tiltY, tiltZ);
     }
 
+    public bool IsConnected => serial is { IsOpen: true };
+
+    public (bool success, string message) Reconnect(string newPort, int newBaud)
+    {
+        // Stop existing connection
+        running = false;
+        readThread?.Join(500);
+
+        if (serial is { IsOpen: true })
+            serial.Close();
+
+        // Apply new settings
+        portName = newPort;
+        baudRate = newBaud;
+
+        // Reopen
+        try
+        {
+            serial = new SerialPort(portName, baudRate)
+            {
+                ReadTimeout = readTimeoutMs,
+                DtrEnable = true,
+                RtsEnable = true
+            };
+            serial.Open();
+            serial.DiscardInBuffer();
+
+            running = true;
+            readThread = new Thread(ReadLoop) { IsBackground = true };
+            readThread.Start();
+
+            Debug.Log($"[InputReader] Reconnected to {portName} @ {baudRate}");
+            return (true, $"Connected to {portName} @ {baudRate}");
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[InputReader] Failed to open {portName}: {e.Message}");
+            return (false, $"Failed: {e.Message}");
+        }
+    }
+
     public static string[] GetAvailablePorts() => SerialPort.GetPortNames();
 }

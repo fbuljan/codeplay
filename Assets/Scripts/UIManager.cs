@@ -1,4 +1,7 @@
+using System;
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.UI;
 using TMPro;
 
 /// <summary>
@@ -16,6 +19,15 @@ public class UIManager : MonoBehaviour
     TextMeshProUGUI shieldText;
     TextMeshProUGUI multiplierText;
     TextMeshProUGUI gameOverScoreText;
+    TextMeshProUGUI gameOverHighScoreText;
+    TextMeshProUGUI newHighScoreText;
+    TextMeshProUGUI menuHighScoreText;
+
+    TMP_InputField portInputField;
+    TMP_InputField baudInputField;
+    TextMeshProUGUI connectionStatusText;
+
+    public event Action OnSettingsChanged;
 
     void Awake()
     {
@@ -30,13 +42,42 @@ public class UIManager : MonoBehaviour
         var canvas = canvasObj.AddComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
         canvas.sortingOrder = 100;
-        canvasObj.AddComponent<UnityEngine.UI.CanvasScaler>().uiScaleMode =
-            UnityEngine.UI.CanvasScaler.ScaleMode.ScaleWithScreenSize;
-        canvasObj.AddComponent<UnityEngine.UI.GraphicRaycaster>();
+        canvasObj.AddComponent<CanvasScaler>().uiScaleMode =
+            CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        canvasObj.AddComponent<GraphicRaycaster>();
+
+        // EventSystem (required for input fields to be clickable)
+        if (FindObjectOfType<EventSystem>() == null)
+        {
+            var eventSystem = new GameObject("EventSystem");
+            eventSystem.AddComponent<EventSystem>();
+            eventSystem.AddComponent<StandaloneInputModule>();
+        }
 
         // Menu Panel
         menuPanel = CreatePanel(canvasObj.transform, "MenuPanel");
-        CreateText(menuPanel.transform, "PRESS ANY BUTTON TO START", 48, TextAlignmentOptions.Center);
+        CreateText(menuPanel.transform, "PRESS ANY BUTTON TO START", 48, TextAlignmentOptions.Center,
+            new Vector2(0, 80));
+
+        // Settings area — bottom-left corner
+        CreateText(menuPanel.transform, "Port:", 22, TextAlignmentOptions.MidlineLeft,
+            new Vector2(20, 70), new Vector2(0, 0), new Vector2(0, 0), new Vector2(0, 0.5f));
+        portInputField = CreateInputField(menuPanel.transform, "COM3",
+            new Vector2(90, 70), 150, new Vector2(0, 0), new Vector2(0, 0.5f));
+
+        CreateText(menuPanel.transform, "Baud:", 22, TextAlignmentOptions.MidlineLeft,
+            new Vector2(20, 30), new Vector2(0, 0), new Vector2(0, 0), new Vector2(0, 0.5f));
+        baudInputField = CreateInputField(menuPanel.transform, "115200",
+            new Vector2(90, 30), 150, new Vector2(0, 0), new Vector2(0, 0.5f));
+
+        connectionStatusText = CreateText(menuPanel.transform, "", 18, TextAlignmentOptions.MidlineLeft,
+            new Vector2(250, 50), new Vector2(0, 0), new Vector2(0, 0), new Vector2(0, 0.5f));
+
+        portInputField.onEndEdit.AddListener(_ => OnSettingsChanged?.Invoke());
+        baudInputField.onEndEdit.AddListener(_ => OnSettingsChanged?.Invoke());
+
+        menuHighScoreText = CreateText(menuPanel.transform, "", 28, TextAlignmentOptions.Center,
+            new Vector2(0, -40));
 
         // HUD Panel
         hudPanel = CreatePanel(canvasObj.transform, "HUDPanel");
@@ -52,11 +93,17 @@ public class UIManager : MonoBehaviour
         // Game Over Panel
         gameOverPanel = CreatePanel(canvasObj.transform, "GameOverPanel");
         CreateText(gameOverPanel.transform, "GAME OVER", 64, TextAlignmentOptions.Center,
-            new Vector2(0, 40));
+            new Vector2(0, 60));
         gameOverScoreText = CreateText(gameOverPanel.transform, "Score: 0", 36, TextAlignmentOptions.Center,
-            new Vector2(0, -30));
+            new Vector2(0, -10));
+        gameOverHighScoreText = CreateText(gameOverPanel.transform, "", 28, TextAlignmentOptions.Center,
+            new Vector2(0, -50));
+        newHighScoreText = CreateText(gameOverPanel.transform, "NEW HIGH SCORE!", 32, TextAlignmentOptions.Center,
+            new Vector2(0, -90));
+        newHighScoreText.color = new Color(1f, 0.8f, 0f); // Gold
+        newHighScoreText.gameObject.SetActive(false);
         CreateText(gameOverPanel.transform, "Press any button to restart", 24, TextAlignmentOptions.Center,
-            new Vector2(0, -80));
+            new Vector2(0, -130));
     }
 
     GameObject CreatePanel(Transform parent, string name)
@@ -94,11 +141,78 @@ public class UIManager : MonoBehaviour
         return tmp;
     }
 
+    TMP_InputField CreateInputField(Transform parent, string defaultText, Vector2 position, float width,
+        Vector2? anchor = null, Vector2? pivot = null)
+    {
+        // Container
+        var obj = new GameObject("InputField", typeof(RectTransform));
+        obj.transform.SetParent(parent, false);
+
+        var rect = obj.GetComponent<RectTransform>();
+        Vector2 a = anchor ?? new Vector2(0.5f, 0.5f);
+        rect.anchorMin = a;
+        rect.anchorMax = a;
+        rect.pivot = pivot ?? new Vector2(0.5f, 0.5f);
+        rect.anchoredPosition = position;
+        rect.sizeDelta = new Vector2(width, 36);
+
+        // Background
+        var bg = obj.AddComponent<Image>();
+        bg.color = new Color(0.15f, 0.15f, 0.15f, 0.9f);
+
+        // Text area
+        var textArea = new GameObject("Text Area", typeof(RectTransform));
+        textArea.transform.SetParent(obj.transform, false);
+        var textAreaRect = textArea.GetComponent<RectTransform>();
+        textAreaRect.anchorMin = Vector2.zero;
+        textAreaRect.anchorMax = Vector2.one;
+        textAreaRect.offsetMin = new Vector2(10, 0);
+        textAreaRect.offsetMax = new Vector2(-10, 0);
+        textArea.AddComponent<RectMask2D>();
+
+        // Input text
+        var textObj = new GameObject("Text", typeof(RectTransform));
+        textObj.transform.SetParent(textArea.transform, false);
+        var textRect = textObj.GetComponent<RectTransform>();
+        textRect.anchorMin = Vector2.zero;
+        textRect.anchorMax = Vector2.one;
+        textRect.offsetMin = Vector2.zero;
+        textRect.offsetMax = Vector2.zero;
+
+        var tmp = textObj.AddComponent<TextMeshProUGUI>();
+        tmp.fontSize = 24;
+        tmp.color = Color.white;
+        tmp.alignment = TextAlignmentOptions.MidlineLeft;
+
+        // Input field component
+        var inputField = obj.AddComponent<TMP_InputField>();
+        inputField.textComponent = tmp;
+        inputField.textViewport = textAreaRect;
+        inputField.text = defaultText;
+        inputField.transition = Selectable.Transition.None;
+
+        // Caret
+        inputField.selectionColor = new Color(0.3f, 0.6f, 1f, 0.4f);
+        inputField.caretColor = Color.white;
+        inputField.caretWidth = 2;
+        inputField.customCaretColor = true;
+
+        // Explicit background color swap on focus
+        Image bgRef = bg;
+        inputField.onSelect.AddListener(_ => bgRef.color = new Color(0.15f, 0.25f, 0.4f, 0.95f));
+        inputField.onDeselect.AddListener(_ => bgRef.color = new Color(0.15f, 0.15f, 0.15f, 0.9f));
+
+        return inputField;
+    }
+
     public void OnGameStateChanged(GameState state)
     {
         menuPanel.SetActive(state == GameState.Menu);
         hudPanel.SetActive(state == GameState.Playing);
         gameOverPanel.SetActive(state == GameState.GameOver);
+
+        if (state == GameState.GameOver)
+            newHighScoreText.gameObject.SetActive(false);
     }
 
     public void UpdateScore(int score)
@@ -149,5 +263,55 @@ public class UIManager : MonoBehaviour
             shieldText.text = "SHIELD READY";
             shieldText.color = Color.white;
         }
+    }
+
+    // ---- Settings & High Score ----
+
+    public void SetPortName(string port)
+    {
+        if (portInputField != null)
+            portInputField.text = port;
+    }
+
+    public void SetBaudRate(int baud)
+    {
+        if (baudInputField != null)
+            baudInputField.text = baud.ToString();
+    }
+
+    public string GetPortName()
+    {
+        return portInputField != null ? portInputField.text : "COM3";
+    }
+
+    public int GetBaudRate()
+    {
+        if (baudInputField != null && int.TryParse(baudInputField.text, out int baud))
+            return baud;
+        return 115200;
+    }
+
+    public void UpdateHighScore(int highScore)
+    {
+        string text = highScore > 0 ? $"High Score: {highScore}" : "";
+
+        if (menuHighScoreText != null)
+            menuHighScoreText.text = text;
+
+        if (gameOverHighScoreText != null)
+            gameOverHighScoreText.text = text;
+    }
+
+    public void UpdateConnectionStatus(string message, bool success)
+    {
+        if (connectionStatusText == null) return;
+        connectionStatusText.text = message;
+        connectionStatusText.color = success ? new Color(0.3f, 1f, 0.3f) : new Color(1f, 0.4f, 0.4f);
+    }
+
+    public void ShowNewHighScore()
+    {
+        if (newHighScoreText != null)
+            newHighScoreText.gameObject.SetActive(true);
     }
 }
