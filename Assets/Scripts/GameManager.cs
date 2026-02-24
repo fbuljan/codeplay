@@ -50,6 +50,7 @@ public class GameManager : MonoBehaviour
     int highScore;
     float lastScoredZ;
     float scoreMultiplier = 1f;
+    bool isTrainingMode;
 
     void Awake()
     {
@@ -111,12 +112,26 @@ public class GameManager : MonoBehaviour
         switch (State)
         {
             case GameState.Menu:
-                if (AnyButtonPressed())
-                    SetState(GameState.Playing);
+                if (inputProcessor != null)
+                {
+                    if (inputProcessor.IsJumpHeld)
+                    {
+                        isTrainingMode = false;
+                        SetState(GameState.Playing);
+                    }
+                    else if (inputProcessor.IsSlideHeld)
+                    {
+                        isTrainingMode = true;
+                        SetState(GameState.Playing);
+                    }
+                }
                 break;
 
             case GameState.Playing:
-                UpdateDistanceScore();
+                if (!isTrainingMode)
+                    UpdateDistanceScore();
+                if (isTrainingMode && Input.GetKeyDown(KeyCode.K))
+                    RestartGame();
                 break;
 
             case GameState.GameOver:
@@ -139,25 +154,39 @@ public class GameManager : MonoBehaviour
 
             case GameState.Playing:
                 ApplySerialSettings();
+                if (uiManager != null)
+                    uiManager.SetTrainingMode(isTrainingMode);
                 if (playerController != null)
                     playerController.SetMovementEnabled(true);
                 if (playerHealth != null)
                 {
                     playerHealth.ResetHealth();
+                    playerHealth.PermanentlyInvincible = isTrainingMode;
                     if (uiManager != null)
                         uiManager.UpdateHealth(playerHealth.CurrentHealth);
                 }
                 if (spawnManager != null)
-                    spawnManager.SetSpawningEnabled(true);
-                if (difficultyManager != null)
-                    difficultyManager.SetActive(true);
-                score = 0;
-                scoreMultiplier = 1f;
-                lastScoredZ = playerTransform.position.z;
-                if (uiManager != null)
                 {
-                    uiManager.UpdateScore(score);
-                    uiManager.UpdateMultiplier(scoreMultiplier);
+                    spawnManager.SetSpawningEnabled(true);
+                    if (isTrainingMode)
+                    {
+                        spawnManager.SetSpawnIntervals(3f, 5f);
+                        spawnManager.SetEnemyChances(0.15f, 0.05f);
+                        spawnManager.SetCollectibleChances(0.2f, 0f);
+                    }
+                }
+                if (difficultyManager != null && !isTrainingMode)
+                    difficultyManager.SetActive(true);
+                if (!isTrainingMode)
+                {
+                    score = 0;
+                    scoreMultiplier = 1f;
+                    lastScoredZ = playerTransform.position.z;
+                    if (uiManager != null)
+                    {
+                        uiManager.UpdateScore(score);
+                        uiManager.UpdateMultiplier(scoreMultiplier);
+                    }
                 }
                 break;
 
@@ -178,6 +207,12 @@ public class GameManager : MonoBehaviour
 
     public void OnPlayerDied()
     {
+        if (isTrainingMode)
+        {
+            if (playerHealth != null)
+                playerHealth.ResetHealth();
+            return;
+        }
         SetState(GameState.GameOver);
     }
 
@@ -238,7 +273,7 @@ public class GameManager : MonoBehaviour
 
     public void OnEnemyKilled(Enemy enemy)
     {
-        if (State != GameState.Playing) return;
+        if (State != GameState.Playing || isTrainingMode) return;
         score += Mathf.RoundToInt(enemyKillScore * scoreMultiplier);
         scoreMultiplier += multiplierIncreasePerKill;
         if (uiManager != null)
@@ -250,7 +285,7 @@ public class GameManager : MonoBehaviour
 
     public void OnCoinCollected(Coin coin)
     {
-        if (State != GameState.Playing) return;
+        if (State != GameState.Playing || isTrainingMode) return;
         score += Mathf.RoundToInt(coinScoreBase * scoreMultiplier);
         scoreMultiplier += multiplierIncreasePerCoin;
         if (uiManager != null)

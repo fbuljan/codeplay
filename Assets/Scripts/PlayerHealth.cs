@@ -17,6 +17,7 @@ public class PlayerHealth : MonoBehaviour
     public int CurrentHealth { get; private set; }
     public bool IsInvincible { get; private set; }
     public bool IsShielded { get; private set; }
+    public bool PermanentlyInvincible { get; set; }
 
     public event Action<int> OnHealthChanged;
     public event Action OnDied;
@@ -62,7 +63,7 @@ public class PlayerHealth : MonoBehaviour
 
     public void TakeDamage(int amount = 1, bool isEnemyDamage = false)
     {
-        if (IsInvincible) return;
+        if (IsInvincible || PermanentlyInvincible) return;
         if (IsShielded && isEnemyDamage) return;
         if (CurrentHealth <= 0) return;
 

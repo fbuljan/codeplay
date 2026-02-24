@@ -23,9 +23,14 @@ public class UIManager : MonoBehaviour
     TextMeshProUGUI newHighScoreText;
     TextMeshProUGUI menuHighScoreText;
 
+    TextMeshProUGUI trainingLabel;
+    TextMeshProUGUI trainingExitText;
+
     TMP_InputField portInputField;
     TMP_InputField baudInputField;
     TextMeshProUGUI connectionStatusText;
+
+    bool isTrainingMode;
 
     public event Action OnSettingsChanged;
 
@@ -56,8 +61,10 @@ public class UIManager : MonoBehaviour
 
         // Menu Panel
         menuPanel = CreatePanel(canvasObj.transform, "MenuPanel");
-        CreateText(menuPanel.transform, "PRESS ANY BUTTON TO START", 48, TextAlignmentOptions.Center,
-            new Vector2(0, 80));
+        CreateText(menuPanel.transform, "[BUTTON4] PLAY", 48, TextAlignmentOptions.Center,
+            new Vector2(0, 100));
+        CreateText(menuPanel.transform, "[BUTTON1] TRAINING", 32, TextAlignmentOptions.Center,
+            new Vector2(0, 40));
 
         // Settings area — bottom-left corner
         CreateText(menuPanel.transform, "Port:", 22, TextAlignmentOptions.MidlineLeft,
@@ -89,6 +96,17 @@ public class UIManager : MonoBehaviour
             new Vector2(0, 20), new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0.5f, 0));
         multiplierText = CreateText(hudPanel.transform, "x1.0", 28, TextAlignmentOptions.TopLeft,
             new Vector2(20, -60), new Vector2(0, 1), new Vector2(0, 1), new Vector2(0, 1));
+
+        // Training HUD (hidden by default)
+        trainingLabel = CreateText(hudPanel.transform, "TRAINING MODE", 28, TextAlignmentOptions.TopLeft,
+            new Vector2(20, -20), new Vector2(0, 1), new Vector2(0, 1), new Vector2(0, 1));
+        trainingLabel.color = new Color(0.5f, 1f, 0.5f);
+        trainingLabel.gameObject.SetActive(false);
+
+        trainingExitText = CreateText(hudPanel.transform, "Press K to exit", 22, TextAlignmentOptions.TopRight,
+            new Vector2(-20, -20), new Vector2(1, 1), new Vector2(1, 1), new Vector2(1, 1));
+        trainingExitText.color = Color.gray;
+        trainingExitText.gameObject.SetActive(false);
 
         // Game Over Panel
         gameOverPanel = CreatePanel(canvasObj.transform, "GameOverPanel");
@@ -205,11 +223,25 @@ public class UIManager : MonoBehaviour
         return inputField;
     }
 
+    public void SetTrainingMode(bool training)
+    {
+        isTrainingMode = training;
+    }
+
     public void OnGameStateChanged(GameState state)
     {
         menuPanel.SetActive(state == GameState.Menu);
         hudPanel.SetActive(state == GameState.Playing);
         gameOverPanel.SetActive(state == GameState.GameOver);
+
+        if (state == GameState.Playing)
+        {
+            scoreText.gameObject.SetActive(!isTrainingMode);
+            multiplierText.gameObject.SetActive(!isTrainingMode);
+            healthText.gameObject.SetActive(!isTrainingMode);
+            trainingLabel.gameObject.SetActive(isTrainingMode);
+            trainingExitText.gameObject.SetActive(isTrainingMode);
+        }
 
         if (state == GameState.GameOver)
             newHighScoreText.gameObject.SetActive(false);
