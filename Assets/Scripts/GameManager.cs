@@ -44,6 +44,13 @@ public class GameManager : MonoBehaviour
     public GameState State { get; private set; }
     public float[] LanePositions { get; private set; }
 
+    // Serial event codes sent to controller
+    const int EventCoinCollected = 1;
+    const int EventHealthPickup = 2;
+    const int EventEnemyKilled = 3;
+    const int EventDamageTaken = 4;
+    const int EventPlayerDied = 5;
+
     PlayerController playerController;
     InputReader inputReader;
     int score;
@@ -207,6 +214,7 @@ public class GameManager : MonoBehaviour
 
     public void OnPlayerDied()
     {
+        SendGameEvent(EventPlayerDied);
         if (isTrainingMode)
         {
             if (playerHealth != null)
@@ -222,6 +230,7 @@ public class GameManager : MonoBehaviour
             uiManager.UpdateHealth(currentHealth);
 
         // Reset multiplier on damage
+        SendGameEvent(EventDamageTaken);
         scoreMultiplier = 1f;
         if (uiManager != null)
             uiManager.UpdateMultiplier(scoreMultiplier);
@@ -273,6 +282,7 @@ public class GameManager : MonoBehaviour
 
     public void OnEnemyKilled(Enemy enemy)
     {
+        SendGameEvent(EventEnemyKilled);
         if (State != GameState.Playing || isTrainingMode) return;
         score += Mathf.RoundToInt(enemyKillScore * scoreMultiplier);
         scoreMultiplier += multiplierIncreasePerKill;
@@ -285,6 +295,7 @@ public class GameManager : MonoBehaviour
 
     public void OnCoinCollected(Coin coin)
     {
+        SendGameEvent(EventCoinCollected);
         if (State != GameState.Playing || isTrainingMode) return;
         score += Mathf.RoundToInt(coinScoreBase * scoreMultiplier);
         scoreMultiplier += multiplierIncreasePerCoin;
@@ -293,6 +304,19 @@ public class GameManager : MonoBehaviour
             uiManager.UpdateScore(score);
             uiManager.UpdateMultiplier(scoreMultiplier);
         }
+    }
+
+    public void OnHealthPickup()
+    {
+        SendGameEvent(EventHealthPickup);
+    }
+
+    // ---- Serial Events ----
+
+    void SendGameEvent(int eventCode)
+    {
+        if (inputReader != null)
+            inputReader.SendEvent(eventCode);
     }
 
     // ---- Settings & High Score ----

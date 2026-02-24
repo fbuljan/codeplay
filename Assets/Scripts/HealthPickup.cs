@@ -31,6 +31,9 @@ public class HealthPickup : MonoBehaviour
         if (health.CurrentHealth < health.MaxHealth)
             health.Heal(1);
 
+        if (GameManager.Instance != null)
+            GameManager.Instance.OnHealthPickup();
+
         gameObject.SetActive(false);
     }
 }

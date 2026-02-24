@@ -20,8 +20,10 @@ public class InputProcessor : MonoBehaviour
     public event Action OnSlidePressed;
     public event Action OnShootPressed;
     public event Action OnShieldPressed;
+    public event Action OnJoystickButtonPressed;
 
     bool[] previousButtonStates;
+    bool previousJoystickButton;
 
     void Awake()
     {
@@ -49,6 +51,12 @@ public class InputProcessor : MonoBehaviour
         ProcessButton(slideButtonIndex, OnSlidePressed);
         ProcessButton(shootButtonIndex, OnShootPressed);
         ProcessButton(shieldButtonIndex, OnShieldPressed);
+
+        // Joystick button (separate from face buttons)
+        bool joyBtn = inputReader.JoystickButton;
+        if (joyBtn && !previousJoystickButton)
+            OnJoystickButtonPressed?.Invoke();
+        previousJoystickButton = joyBtn;
 
         Array.Copy(inputReader.FaceButtons, previousButtonStates, inputReader.FaceButtons.Length);
     }

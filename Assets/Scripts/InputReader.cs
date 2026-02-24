@@ -202,5 +202,20 @@ public class InputReader : MonoBehaviour
         }
     }
 
+    public void SendEvent(int eventCode)
+    {
+        if (serial is not { IsOpen: true }) return;
+
+        try
+        {
+            byte[] data = { (byte)eventCode };
+            serial.Write(data, 0, 1);
+        }
+        catch (Exception e)
+        {
+            Debug.LogWarning($"[InputReader] Send error: {e.Message}");
+        }
+    }
+
     public static string[] GetAvailablePorts() => SerialPort.GetPortNames();
 }
