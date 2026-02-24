@@ -274,25 +274,24 @@ public class SpawnManager : MonoBehaviour
     {
         float[] lanes = PickMultipleLanes(3);
 
-        // Obstacle + enemy on one lane
-        float enemyLane = lanes[0];
-        ObstacleType type = PickObstacleType();
-        QueueObstacle(type, enemyLane, z);
+        // Obstacle on one lane, enemy on a different lane so it won't clip through
+        float obstacleLane = lanes[0];
+        float enemyLane = lanes.Length > 1 ? lanes[1] : PickOtherLaneX(obstacleLane);
+        QueueObstacle(PickObstacleType(), obstacleLane, z);
         QueueSpawn(z + Random.Range(5f, 9f), enemyLane, SpawnType.GroundEnemy);
 
-        // Extra obstacles on other lanes at similar Z
-        if (lanes.Length > 1)
+        // Extra obstacle on another lane at similar Z
+        if (lanes.Length > 2)
         {
-            QueueObstacle(PickObstacleType(), lanes[1], z + Random.Range(-1f, 1.5f));
+            QueueObstacle(PickObstacleType(), lanes[2], z + Random.Range(-1f, 1.5f));
         }
 
-        // Coins between obstacle and enemy on free lane(s)
+        // Coins between obstacle and enemy on obstacle lane (safe since enemy is elsewhere)
         if (coinPrefab != null)
         {
-            float coinLane = lanes.Length > 2 ? lanes[2] : PickOtherLaneX(enemyLane);
-            QueueSpawn(z + 2.5f, coinLane, SpawnType.Coin);
-            QueueSpawn(z + 4f, coinLane, SpawnType.Coin);
-            QueueSpawn(z + 5.5f, coinLane, SpawnType.Coin);
+            QueueSpawn(z + 2.5f, obstacleLane, SpawnType.Coin);
+            QueueSpawn(z + 4f, obstacleLane, SpawnType.Coin);
+            QueueSpawn(z + 5.5f, obstacleLane, SpawnType.Coin);
         }
     }
 
@@ -510,7 +509,6 @@ public class SpawnManager : MonoBehaviour
         {
             enemy.SetPlayerTransform(playerTransform);
             enemy.Initialize();
-            enemy.SetBlockingObstacles(GetObstaclesBetween(playerTransform.position.z, z));
         }
 
         obj.SetActive(true);
@@ -554,26 +552,6 @@ public class SpawnManager : MonoBehaviour
     }
 
     // ---- Helpers ----
-
-    List<GameObject> GetObstaclesBetween(float minZ, float maxZ)
-    {
-        List<GameObject> result = new();
-        CollectActiveInRange(lowPool, minZ, maxZ, result);
-        CollectActiveInRange(highPool, minZ, maxZ, result);
-        CollectActiveInRange(blockerPool, minZ, maxZ, result);
-        return result;
-    }
-
-    void CollectActiveInRange(List<GameObject> pool, float minZ, float maxZ, List<GameObject> result)
-    {
-        for (int i = 0; i < pool.Count; i++)
-        {
-            if (!pool[i].activeSelf) continue;
-            float z = pool[i].transform.position.z;
-            if (z > minZ && z < maxZ)
-                result.Add(pool[i]);
-        }
-    }
 
     void RecycleBehindPlayer()
     {

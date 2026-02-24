@@ -1,78 +1,51 @@
-using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// Ground enemy that stands in the lane or slowly moves toward the player.
-/// Extends Enemy for health/collision. Destroyed by shooting (Step 7).
-/// Waits until the player clears all obstacles that were between them at spawn time.
+/// Ground enemy that charges toward the player when within detection range.
+/// Accelerates as it gets closer for an aggressive feel.
 /// </summary>
 public class GroundEnemy : Enemy
 {
     [Header("Movement")]
-    [SerializeField] float moveSpeed = 2f;
+    [SerializeField] float moveSpeed = 4f;
+    [SerializeField] float chargeSpeed = 8f;
+
+    [Header("Detection")]
+    [SerializeField] float detectionRange = 20f;
 
     Transform playerTransform;
-    bool movesTowardPlayer;
-    bool waitingToCharge;
-    List<GameObject> blockingObstacles;
+    bool charging;
 
     public void SetPlayerTransform(Transform player)
     {
         playerTransform = player;
     }
 
-    /// <summary>
-    /// Give the enemy a list of obstacles that stand between it and the player.
-    /// Once the player passes all of them, the enemy starts charging.
-    /// </summary>
-    public void SetBlockingObstacles(List<GameObject> obstacles)
-    {
-        blockingObstacles = obstacles;
-        waitingToCharge = obstacles != null && obstacles.Count > 0;
-        movesTowardPlayer = false;
-    }
-
     public override void Initialize()
     {
         base.Initialize();
-        movesTowardPlayer = false;
-        waitingToCharge = false;
-        blockingObstacles = null;
+        charging = false;
     }
 
     void Update()
     {
         if (playerTransform == null) return;
 
-        if (waitingToCharge)
+        if (!charging)
         {
-            if (AllObstaclesCleared())
-            {
-                waitingToCharge = false;
-                movesTowardPlayer = true;
-            }
-            return;
+            float dist = transform.position.z - playerTransform.position.z;
+            if (dist <= detectionRange)
+                charging = true;
+            else
+                return;
         }
 
-        if (!movesTowardPlayer) return;
+        // Accelerate as we get closer — lerp from moveSpeed to chargeSpeed
+        float distance = Mathf.Abs(transform.position.z - playerTransform.position.z);
+        float t = 1f - Mathf.Clamp01(distance / detectionRange);
+        float speed = Mathf.Lerp(moveSpeed, chargeSpeed, t);
 
         float direction = Mathf.Sign(playerTransform.position.z - transform.position.z);
-        transform.position += Vector3.forward * (direction * moveSpeed * Time.deltaTime);
-    }
-
-    bool AllObstaclesCleared()
-    {
-        float playerZ = playerTransform.position.z;
-
-        for (int i = 0; i < blockingObstacles.Count; i++)
-        {
-            GameObject obs = blockingObstacles[i];
-            // Recycled/deactivated obstacles count as cleared
-            if (!obs.activeSelf) continue;
-            // Player hasn't passed this one yet
-            if (obs.transform.position.z > playerZ) return false;
-        }
-
-        return true;
+        transform.position += Vector3.forward * (direction * speed * Time.deltaTime);
     }
 }

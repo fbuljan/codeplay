@@ -122,3 +122,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   maxHealth: 1
   moveSpeed: 5
+  chargeSpeed: 8
+  detectionRange: 40
