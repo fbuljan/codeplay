@@ -25,6 +25,8 @@ public class UIManager : MonoBehaviour
 
     TextMeshProUGUI trainingLabel;
     TextMeshProUGUI trainingExitText;
+    TextMeshProUGUI controllerLetterLabel;
+    TextMeshProUGUI controllerLetterText;
 
     TMP_InputField portInputField;
     TMP_InputField baudInputField;
@@ -107,6 +109,16 @@ public class UIManager : MonoBehaviour
             new Vector2(-20, -20), new Vector2(1, 1), new Vector2(1, 1), new Vector2(1, 1));
         trainingExitText.color = Color.gray;
         trainingExitText.gameObject.SetActive(false);
+
+        // Controller letter display — bottom-right, visible in both modes
+        controllerLetterLabel = CreateText(hudPanel.transform, "Recognized letter:", 22, TextAlignmentOptions.BottomRight,
+            new Vector2(-20, 90), new Vector2(1, 0), new Vector2(1, 0), new Vector2(1, 0));
+        controllerLetterLabel.color = new Color(1f, 1f, 1f, 0.5f);
+        controllerLetterLabel.gameObject.SetActive(false);
+
+        controllerLetterText = CreateText(hudPanel.transform, "", 64, TextAlignmentOptions.BottomRight,
+            new Vector2(-20, 20), new Vector2(1, 0), new Vector2(1, 0), new Vector2(1, 0));
+        controllerLetterText.color = new Color(1f, 1f, 1f, 0.8f);
 
         // Game Over Panel
         gameOverPanel = CreatePanel(canvasObj.transform, "GameOverPanel");
@@ -339,6 +351,15 @@ public class UIManager : MonoBehaviour
         if (connectionStatusText == null) return;
         connectionStatusText.text = message;
         connectionStatusText.color = success ? new Color(0.3f, 1f, 0.3f) : new Color(1f, 0.4f, 0.4f);
+    }
+
+    public void UpdateControllerLetter(string letter)
+    {
+        if (controllerLetterText != null)
+            controllerLetterText.text = letter;
+
+        if (controllerLetterLabel != null)
+            controllerLetterLabel.gameObject.SetActive(!string.IsNullOrEmpty(letter));
     }
 
     public void ShowNewHighScore()

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO.Ports;
 using System.Threading;
 using UnityEngine;
@@ -33,6 +34,7 @@ public class InputReader : MonoBehaviour
     public Vector3 Tilt { get; private set; }
 
     public event Action OnInputReceived;
+    public event Action<char> OnLetterReceived;
 
     SerialPort serial;
     Thread readThread;
@@ -41,6 +43,10 @@ public class InputReader : MonoBehaviour
     // Thread-safe packet transfer
     byte[] latestPacket;
     readonly object packetLock = new();
+
+    // Thread-safe letter transfer
+    readonly Queue<char> letterQueue = new();
+    readonly object letterLock = new();
 
     void Awake()
     {
@@ -94,8 +100,23 @@ public class InputReader : MonoBehaviour
         {
             try
             {
-                // Read exactly PacketSize bytes
-                int bytesRead = 0;
+                // Read first byte to determine message type
+                int firstByte = serial.ReadByte();
+
+                // ASCII letter A-Z (65-90) = status message from controller
+                // Packet first byte = low byte of buttons bitfield (0-31)
+                if (firstByte >= 'A' && firstByte <= 'Z')
+                {
+                    lock (letterLock)
+                    {
+                        letterQueue.Enqueue((char)firstByte);
+                    }
+                    continue;
+                }
+
+                // Start of a 12-byte packet — read remaining 11 bytes
+                buffer[0] = (byte)firstByte;
+                int bytesRead = 1;
                 while (bytesRead < PacketSize && running)
                 {
                     int read = serial.Read(buffer, bytesRead, PacketSize - bytesRead);
@@ -121,6 +142,17 @@ public class InputReader : MonoBehaviour
 
     void Update()
     {
+        // Process any received letters
+        lock (letterLock)
+        {
+            while (letterQueue.Count > 0)
+            {
+                char letter = letterQueue.Dequeue();
+                OnLetterReceived?.Invoke(letter);
+            }
+        }
+
+        // Process latest input packet
         byte[] packet;
         lock (packetLock)
         {

@@ -91,9 +91,12 @@ public class GameManager : MonoBehaviour
             playerHealth.OnDied += OnPlayerDied;
         }
 
-        // Find InputReader for reconnect
+        // Find InputReader for reconnect and letter events
         if (inputProcessor != null)
             inputReader = FindObjectOfType<InputReader>();
+
+        if (inputReader != null)
+            inputReader.OnLetterReceived += OnControllerLetter;
 
         // Load saved settings
         highScore = PlayerPrefs.GetInt("HighScore", 0);
@@ -244,6 +247,9 @@ public class GameManager : MonoBehaviour
             playerHealth.OnDied -= OnPlayerDied;
         }
 
+        if (inputReader != null)
+            inputReader.OnLetterReceived -= OnControllerLetter;
+
         if (uiManager != null)
             uiManager.OnSettingsChanged -= TryReconnectSerial;
     }
@@ -317,6 +323,12 @@ public class GameManager : MonoBehaviour
     {
         if (inputReader != null)
             inputReader.SendEvent(eventCode);
+    }
+
+    void OnControllerLetter(char letter)
+    {
+        if (uiManager != null)
+            uiManager.UpdateControllerLetter(letter.ToString());
     }
 
     // ---- Settings & High Score ----
