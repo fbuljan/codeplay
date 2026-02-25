@@ -34,6 +34,8 @@ public class PlayerController : MonoBehaviour
     [SerializeField] float reticleDistance = 15f;
     [SerializeField] float groundAimY = 1f;
     [SerializeField] float airAimY = 5f;
+    [SerializeField] Material reticleMaterial;
+    [SerializeField] Material reticleAimedMaterial;
 
     [Header("Lane Switching")]
     [SerializeField] float tiltAmplitude = 0.5f;
@@ -44,7 +46,7 @@ public class PlayerController : MonoBehaviour
     [Header("Shield")]
     [SerializeField] float shieldDuration = 1f;
     [SerializeField] float shieldCooldown = 3f;
-    [SerializeField] Color shieldColor = new(0f, 0.5f, 1f, 0.3f);
+    [SerializeField] Material shieldMaterial;
 
     [Header("Ground Detection")]
     [SerializeField] float groundTolerance = 0.05f;
@@ -419,19 +421,8 @@ public class PlayerController : MonoBehaviour
         reticleVisual.transform.localScale = new Vector3(1.5f, 1.5f, 1f);
         reticleVisual.transform.rotation = Quaternion.Euler(0, 0, 45); // diamond shape
 
-        var renderer = reticleVisual.GetComponent<Renderer>();
-        // Use the shader from the primitive's own material (guaranteed in build)
-        var mat = new Material(renderer.sharedMaterial.shader);
-        mat.SetFloat("_Mode", 3);
-        mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
-        mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
-        mat.SetInt("_ZWrite", 0);
-        mat.DisableKeyword("_ALPHATEST_ON");
-        mat.EnableKeyword("_ALPHABLEND_ON");
-        mat.DisableKeyword("_ALPHAPREMULTIPLY_ON");
-        mat.renderQueue = 3000;
-        mat.color = new Color(1f, 0.3f, 0.3f, 0.6f);
-        renderer.material = mat;
+        if (reticleMaterial != null)
+            reticleVisual.GetComponent<Renderer>().material = reticleMaterial;
 
         reticleVisual.SetActive(false);
     }
@@ -452,14 +443,12 @@ public class PlayerController : MonoBehaviour
             transform.position.z + reticleDistance
         );
 
-        // Color: blue when aiming at an enemy, red otherwise
+        // Swap material: aimed vs default
         bool enemyAimed = IsEnemyInAimCorridor(targetX, targetY);
         var renderer = reticleVisual.GetComponent<Renderer>();
-        if (renderer != null)
+        if (renderer != null && reticleMaterial != null && reticleAimedMaterial != null)
         {
-            renderer.material.color = enemyAimed
-                ? new Color(0.3f, 0.5f, 1f, 0.6f)
-                : new Color(1f, 0.3f, 0.3f, 0.6f);
+            renderer.material = enemyAimed ? reticleAimedMaterial : reticleMaterial;
         }
     }
 
@@ -555,19 +544,8 @@ public class PlayerController : MonoBehaviour
         var col = shieldVisual.GetComponent<Collider>();
         if (col != null) Object.Destroy(col);
 
-        // Semi-transparent material
-        var renderer = shieldVisual.GetComponent<Renderer>();
-        var mat = new Material(Shader.Find("Standard"));
-        mat.SetFloat("_Mode", 3); // Transparent mode
-        mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
-        mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
-        mat.SetInt("_ZWrite", 0);
-        mat.DisableKeyword("_ALPHATEST_ON");
-        mat.EnableKeyword("_ALPHABLEND_ON");
-        mat.DisableKeyword("_ALPHAPREMULTIPLY_ON");
-        mat.renderQueue = 3000;
-        mat.color = shieldColor;
-        renderer.material = mat;
+        if (shieldMaterial != null)
+            shieldVisual.GetComponent<Renderer>().material = shieldMaterial;
 
         shieldVisual.SetActive(false);
     }

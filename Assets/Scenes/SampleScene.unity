@@ -262,13 +262,15 @@ MonoBehaviour:
   reticleDistance: 15
   groundAimY: 1
   airAimY: 5
+  reticleMaterial: {fileID: 2100000, guid: 7de3d9cee6a876a4c8c04164b71eb097, type: 2}
+  reticleAimedMaterial: {fileID: 2100000, guid: 906d359205a855c4cbae3728e8551356, type: 2}
   tiltAmplitude: 0.2
   tiltLaneThreshold: 0.4
   laneSwitchSpeed: 10
   laneSwitchCooldown: 0.3
   shieldDuration: 1
   shieldCooldown: 3
-  shieldColor: {r: 0, g: 0.5, b: 1, a: 0.3}
+  shieldMaterial: {fileID: 2100000, guid: 758d2adf660ac9f4e93e886037a4d6c1, type: 2}
   groundTolerance: 0.05
   inputProcessor: {fileID: 351667400}
 --- !u!54 &138525990
