@@ -47,6 +47,11 @@ public class AirEnemy : Enemy
     {
         if (!isActive || playerTransform == null) return;
 
+        // Always face the player while active (model faces -Z, so look away then flip 180)
+        Vector3 dirToPlayer = new Vector3(playerTransform.position.x, transform.position.y, playerTransform.position.z) - transform.position;
+        if (dirToPlayer.sqrMagnitude > 0.001f)
+            transform.rotation = Quaternion.LookRotation(-dirToPlayer);
+
         // Follow player Z ahead, stay at hover height with X offset
         transform.position = new Vector3(
             xOffset,
