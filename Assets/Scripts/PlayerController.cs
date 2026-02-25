@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 /// <summary>
@@ -53,8 +54,12 @@ public class PlayerController : MonoBehaviour
 
     [Header("References")]
     [SerializeField] InputProcessor inputProcessor;
+    [SerializeField] Animator playerAnimator;
 
     Rigidbody rb;
+    CapsuleCollider capsuleCollider;
+    float originalColliderHeight;
+    float slideColliderHeight;
 
     float groundY;
     bool isGrounded;
@@ -64,7 +69,8 @@ public class PlayerController : MonoBehaviour
     // Duck / slide state
     bool isSliding;
     bool isSlamming;
-    float targetScaleY = 1f;
+    float targetHeight;
+    bool wasGrounded = true;
 
     // Shooting state
     float shootCooldownTimer;
@@ -92,18 +98,26 @@ public class PlayerController : MonoBehaviour
     void Awake()
     {
         rb = GetComponent<Rigidbody>();
+        capsuleCollider = GetComponent<CapsuleCollider>();
 
         rb.constraints = RigidbodyConstraints.FreezeRotation;
         rb.interpolation = RigidbodyInterpolation.Interpolate;
         rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
 
         groundY = transform.position.y;
+
+        originalColliderHeight = capsuleCollider != null ? capsuleCollider.height : 2f;
+        slideColliderHeight = originalColliderHeight * slideHeightScale;
+        targetHeight = originalColliderHeight;
     }
 
     void Start()
     {
         if (inputProcessor == null)
             inputProcessor = FindObjectOfType<InputProcessor>();
+
+        if (playerAnimator == null)
+            playerAnimator = GetComponentInChildren<Animator>();
 
         if (inputProcessor == null)
         {
@@ -134,10 +148,9 @@ public class PlayerController : MonoBehaviour
 
     public void SetMovementEnabled(bool enabled)
     {
-        movementEnabled = enabled;
-
         if (!enabled)
         {
+            movementEnabled = false;
             rb.velocity = Vector3.zero;
             rb.isKinematic = true;
             jumpRequested = false;
@@ -147,11 +160,32 @@ public class PlayerController : MonoBehaviour
             if (reticleVisual != null) reticleVisual.SetActive(false);
             currentLane = 1;
             targetLaneX = 0f;
+            SetAnim("Walk_Anim", false);
+            SetAnim("Roll_Anim", false);
         }
         else
         {
-            rb.isKinematic = false;
+            StartCoroutine(WaitForOpenThenStart());
         }
+    }
+
+    IEnumerator WaitForOpenThenStart()
+    {
+        // Ensure Open_Anim is true so the robot plays its open animation
+        SetAnim("Open_Anim", true);
+
+        // Wait until the animator reaches the idle state (open animation finished)
+        if (playerAnimator != null)
+        {
+            // Wait one frame for animator to update
+            yield return null;
+            while (!playerAnimator.GetCurrentAnimatorStateInfo(0).IsName("anim_Idle_Loop_S"))
+                yield return null;
+        }
+
+        rb.isKinematic = false;
+        movementEnabled = true;
+        SetAnim("Walk_Anim", true);
     }
 
     void OnJumpPressed()
@@ -176,6 +210,13 @@ public class PlayerController : MonoBehaviour
         UpdateAim();
         UpdateLaneSwitching();
         CheckGrounded();
+
+        // Track airborne state for animation
+        if (!isGrounded && wasGrounded && !isSliding)
+            SetAnim("Walk_Anim", false);
+        else if (isGrounded && !wasGrounded && !isSliding)
+            SetAnim("Walk_Anim", true);
+        wasGrounded = isGrounded;
 
         // Slam landing — start duck when hitting the ground
         if (isSlamming && isGrounded)
@@ -205,7 +246,7 @@ public class PlayerController : MonoBehaviour
             EndSlide();
         }
 
-        UpdateSlideScale();
+        UpdateSlideCollider();
 
         if (shootCooldownTimer > 0f)
             shootCooldownTimer -= Time.deltaTime;
@@ -275,28 +316,30 @@ public class PlayerController : MonoBehaviour
     void StartSlide()
     {
         isSliding = true;
-        targetScaleY = slideHeightScale;
+        targetHeight = slideColliderHeight;
+        SetAnim("Roll_Anim", true);
     }
 
     void EndSlide()
     {
         isSliding = false;
-        targetScaleY = 1f;
+        targetHeight = originalColliderHeight;
+        SetAnim("Roll_Anim", false);
     }
 
-    void UpdateSlideScale()
+    void UpdateSlideCollider()
     {
-        float currentY = transform.localScale.y;
-        if (Mathf.Approximately(currentY, targetScaleY)) return;
+        if (capsuleCollider == null) return;
 
-        float newScaleY = Mathf.MoveTowards(currentY, targetScaleY, slideTransitionSpeed * Time.deltaTime);
+        float currentHeight = capsuleCollider.height;
+        if (Mathf.Approximately(currentHeight, targetHeight)) return;
 
-        Vector3 scale = transform.localScale;
-        scale.y = newScaleY;
-        transform.localScale = scale;
+        float newHeight = Mathf.MoveTowards(currentHeight, targetHeight, slideTransitionSpeed * Time.deltaTime);
+        capsuleCollider.height = newHeight;
 
+        // Keep bottom of collider at ground level by adjusting position
         Vector3 pos = transform.position;
-        pos.y = groundY * newScaleY;
+        pos.y = newHeight * 0.5f;
         transform.position = pos;
     }
 
@@ -550,13 +593,19 @@ public class PlayerController : MonoBehaviour
             shieldVisual.SetActive(false);
     }
 
+    void SetAnim(string param, bool value)
+    {
+        if (playerAnimator != null)
+            playerAnimator.SetBool(param, value);
+    }
+
     void CreateShieldVisual()
     {
         shieldVisual = GameObject.CreatePrimitive(PrimitiveType.Sphere);
         shieldVisual.name = "ShieldBubble";
         shieldVisual.transform.SetParent(transform, false);
-        shieldVisual.transform.localPosition = Vector3.zero;
-        shieldVisual.transform.localScale = Vector3.one * 2f;
+        shieldVisual.transform.localPosition = new Vector3(0f, 0.5f, 0f);
+        shieldVisual.transform.localScale = Vector3.one * 3f;
 
         // Remove collider so it doesn't interfere with physics
         var col = shieldVisual.GetComponent<Collider>();
