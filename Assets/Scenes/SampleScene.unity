@@ -464,6 +464,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aa1b438b4220a204e82f1b8d2c3c79f7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  customFont: {fileID: 11400000, guid: 5ba526f199aadc544a3b0a126412cd41, type: 2}
+  headerLetterSpacing: 12
+  bodyLetterSpacing: 4
+  accentPrimary: {r: 0, g: 0.85, b: 1, a: 1}
+  accentGold: {r: 1, g: 0.8, b: 0, a: 1}
+  panelBackground: {r: 0.02, g: 0.05, b: 0.12, a: 0.85}
+  panelBorder: {r: 0, g: 0.85, b: 1, a: 0.4}
+  textPrimary: {r: 0.9, g: 0.95, b: 1, a: 1}
+  textSecondary: {r: 0.5, g: 0.6, b: 0.7, a: 1}
+  textSuccess: {r: 0.3, g: 1, b: 0.5, a: 1}
+  textDanger: {r: 1, g: 0.35, b: 0.35, a: 1}
+  titleGlowPower: 0.6
+  titleOutlineWidth: 0.15
+  hudOutlineWidth: 0.05
+  titleGlowColor: {r: 0, g: 0.85, b: 1, a: 0.5}
+  panelFadeDuration: 0.3
+  pulseSpeed: 2
+  pulseMinAlpha: 0.4
+  scoreCountSpeed: 500
+  scanlineTexture: {fileID: 0}
+  scanlineAlpha: 0.03
 --- !u!114 &351667403
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -482,7 +503,7 @@ MonoBehaviour:
   groundEnemyPrefab: {fileID: 1466547210547639837, guid: 584c29667dcf6dc4abeb88c44435c543, type: 3}
   airEnemyPrefab: {fileID: 1466547210547639837, guid: 9614af710db3d754cafe33cd2aabc465, type: 3}
   coinPrefab: {fileID: 5822013538250851103, guid: 75d1ab619750d7e4abaa8a7b3573a30a, type: 3}
-  healthPickupPrefab: {fileID: 5822013538250851103, guid: 2b16f3c420cba2846b0fc870ac5771a2, type: 3}
+  healthPickupPrefab: {fileID: 3791075303125733974, guid: b38bef0a8388c974ab504fe0f91fe493, type: 3}
   firstSpawnDistance: 30
   spawnDistance: 180
   despawnBehindDistance: 20
@@ -517,8 +538,8 @@ MonoBehaviour:
   endAirEnemyChance: 0.55
   startCoinChance: 0.4
   endCoinChance: 0.25
-  startHealthChance: 0.05
-  endHealthChance: 0.08
+  startHealthChance: 0.1
+  endHealthChance: 0.2
 --- !u!114 &351667405
 MonoBehaviour:
   m_ObjectHideFlags: 0

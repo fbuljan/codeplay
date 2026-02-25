@@ -54,17 +54,41 @@ public class ParticleEffectManager : MonoBehaviour
             Destroy(gameObject);
             return;
         }
-        Instance = this;
 
         additiveMat = CreateAdditiveMaterial();
+        if (additiveMat == null)
+        {
+            Debug.LogError("[ParticleEffectManager] Failed to create material — particle effects disabled.");
+            Destroy(gameObject);
+            return;
+        }
+
         CreateAllSystems();
+        Instance = this; // Only set AFTER everything is created successfully
+    }
+
+    void OnDestroy()
+    {
+        if (Instance == this)
+            Instance = null;
     }
 
     Material CreateAdditiveMaterial()
     {
+        // Try particle-specific shaders first (best visual results)
         var shader = Shader.Find("Particles/Standard Unlit");
         if (shader == null)
             shader = Shader.Find("Legacy Shaders/Particles/Additive");
+        // Sprites/Default is always included in Unity builds
+        if (shader == null)
+            shader = Shader.Find("Sprites/Default");
+
+        if (shader == null)
+        {
+            Debug.LogError("[ParticleEffectManager] No suitable particle shader found!");
+            return null;
+        }
+
         var mat = new Material(shader);
         mat.SetFloat("_Mode", 1f);
         mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
