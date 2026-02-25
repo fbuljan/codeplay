@@ -28,6 +28,9 @@ public class UIManager : MonoBehaviour
     TextMeshProUGUI controllerLetterLabel;
     TextMeshProUGUI controllerLetterText;
 
+    GameObject pausePanel;
+    TextMeshProUGUI pauseText;
+
     TMP_InputField portInputField;
     TMP_InputField baudInputField;
     TextMeshProUGUI connectionStatusText;
@@ -134,6 +137,18 @@ public class UIManager : MonoBehaviour
         newHighScoreText.gameObject.SetActive(false);
         CreateText(gameOverPanel.transform, "Press any button to restart", 24, TextAlignmentOptions.Center,
             new Vector2(0, -130));
+
+        // Pause Panel — full screen overlay, hidden by default
+        pausePanel = CreatePanel(canvasObj.transform, "PausePanel");
+        var pauseBg = pausePanel.AddComponent<Image>();
+        pauseBg.color = new Color(0f, 0f, 0f, 0.7f);
+        pauseText = CreateText(pausePanel.transform, "PAUSED\n\nPress P to unpause", 48, TextAlignmentOptions.Center);
+        pausePanel.SetActive(false);
+
+        // Hint text — bottom-left of HUD, small and subtle
+        var hintText = CreateText(hudPanel.transform, "P: Pause | Q: Quit", 16, TextAlignmentOptions.BottomLeft,
+            new Vector2(20, 93), new Vector2(0, 0), new Vector2(0, 0), new Vector2(0, 0));
+        hintText.color = new Color(1f, 1f, 1f, 0.35f);
     }
 
     GameObject CreatePanel(Transform parent, string name)
@@ -366,5 +381,13 @@ public class UIManager : MonoBehaviour
     {
         if (newHighScoreText != null)
             newHighScoreText.gameObject.SetActive(true);
+    }
+
+    public void SetPaused(bool paused)
+    {
+        if (pausePanel != null)
+            pausePanel.SetActive(paused);
+        if (hudPanel != null)
+            hudPanel.SetActive(!paused);
     }
 }

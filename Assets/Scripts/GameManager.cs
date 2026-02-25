@@ -58,6 +58,7 @@ public class GameManager : MonoBehaviour
     float lastScoredZ;
     float scoreMultiplier = 1f;
     bool isTrainingMode;
+    bool isPaused;
 
     void Awake()
     {
@@ -119,6 +120,28 @@ public class GameManager : MonoBehaviour
 
     void Update()
     {
+        // Quit — works anytime
+        if (Input.GetKeyDown(KeyCode.Q))
+        {
+            Application.Quit();
+            #if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+            #endif
+            return;
+        }
+
+        // Pause toggle — works during Playing state
+        if (Input.GetKeyDown(KeyCode.P) && State == GameState.Playing)
+        {
+            isPaused = !isPaused;
+            Time.timeScale = isPaused ? 0f : 1f;
+            if (uiManager != null)
+                uiManager.SetPaused(isPaused);
+            return;
+        }
+
+        if (isPaused) return;
+
         switch (State)
         {
             case GameState.Menu:
@@ -153,6 +176,15 @@ public class GameManager : MonoBehaviour
 
     public void SetState(GameState newState)
     {
+        // Unpause whenever state changes
+        if (isPaused)
+        {
+            isPaused = false;
+            Time.timeScale = 1f;
+            if (uiManager != null)
+                uiManager.SetPaused(false);
+        }
+
         State = newState;
 
         switch (newState)
