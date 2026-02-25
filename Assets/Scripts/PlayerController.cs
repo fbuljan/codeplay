@@ -115,9 +115,9 @@ public class PlayerController : MonoBehaviour
 
         playerHealth = GetComponent<PlayerHealth>();
         uiManager = FindObjectOfType<UIManager>();
+        CreateReticle();
         CreateTracer();
         CreateShieldVisual();
-        CreateReticle();
     }
 
     void OnDestroy()
@@ -359,7 +359,7 @@ public class PlayerController : MonoBehaviour
         tracerLine.positionCount = 2;
         tracerLine.startWidth = tracerStartWidth;
         tracerLine.endWidth = tracerEndWidth;
-        tracerLine.material = new Material(Shader.Find("Unlit/Color"));
+        tracerLine.material = new Material(reticleVisual.GetComponent<Renderer>().sharedMaterial.shader);
         tracerLine.material.color = Color.yellow;
         tracerLine.enabled = false;
     }
@@ -420,7 +420,8 @@ public class PlayerController : MonoBehaviour
         reticleVisual.transform.rotation = Quaternion.Euler(0, 0, 45); // diamond shape
 
         var renderer = reticleVisual.GetComponent<Renderer>();
-        var mat = new Material(Shader.Find("Standard"));
+        // Use the shader from the primitive's own material (guaranteed in build)
+        var mat = new Material(renderer.sharedMaterial.shader);
         mat.SetFloat("_Mode", 3);
         mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
         mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
