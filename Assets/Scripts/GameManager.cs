@@ -163,7 +163,7 @@ public class GameManager : MonoBehaviour
             case GameState.Playing:
                 if (!isTrainingMode)
                     UpdateDistanceScore();
-                if (isTrainingMode && Input.GetKeyDown(KeyCode.K))
+                if (Input.GetKeyDown(KeyCode.K))
                     RestartGame();
                 break;
 

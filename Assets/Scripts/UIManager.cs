@@ -96,7 +96,7 @@ public class UIManager : MonoBehaviour
         scoreText = CreateText(hudPanel.transform, "Score: 0", 32, TextAlignmentOptions.TopLeft,
             new Vector2(20, -20), new Vector2(0, 1), new Vector2(0, 1), new Vector2(0, 1));
         healthText = CreateText(hudPanel.transform, "HP: 3", 32, TextAlignmentOptions.TopRight,
-            new Vector2(-20, -20), new Vector2(1, 1), new Vector2(1, 1), new Vector2(1, 1));
+            new Vector2(-20, -60), new Vector2(1, 1), new Vector2(1, 1), new Vector2(1, 1));
         shieldText = CreateText(hudPanel.transform, "SHIELD READY", 24, TextAlignmentOptions.Bottom,
             new Vector2(0, 20), new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0.5f, 0));
         multiplierText = CreateText(hudPanel.transform, "x1.0", 28, TextAlignmentOptions.TopLeft,
@@ -145,8 +145,8 @@ public class UIManager : MonoBehaviour
         pauseText = CreateText(pausePanel.transform, "PAUSED\n\nPress P to unpause", 48, TextAlignmentOptions.Center);
         pausePanel.SetActive(false);
 
-        // Hint text — bottom-left of HUD, small and subtle
-        var hintText = CreateText(hudPanel.transform, "P: Pause | Q: Quit", 16, TextAlignmentOptions.BottomLeft,
+        // Hint text — bottom-left, always visible (parented to canvas, not any panel)
+        var hintText = CreateText(canvasObj.transform, "P: Pause | Q: Quit", 16, TextAlignmentOptions.BottomLeft,
             new Vector2(20, 93), new Vector2(0, 0), new Vector2(0, 0), new Vector2(0, 0));
         hintText.color = new Color(1f, 1f, 1f, 0.35f);
     }
@@ -267,7 +267,7 @@ public class UIManager : MonoBehaviour
             multiplierText.gameObject.SetActive(!isTrainingMode);
             healthText.gameObject.SetActive(!isTrainingMode);
             trainingLabel.gameObject.SetActive(isTrainingMode);
-            trainingExitText.gameObject.SetActive(isTrainingMode);
+            trainingExitText.gameObject.SetActive(true);
         }
 
         if (state == GameState.GameOver)
