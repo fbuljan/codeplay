@@ -31,6 +31,10 @@ public class HealthPickup : MonoBehaviour
         if (health.CurrentHealth < health.MaxHealth)
             health.Heal(1);
 
+        var fx = ParticleEffectManager.Instance;
+        if (fx != null)
+            fx.PlayHealthPickup(transform.position);
+
         if (GameManager.Instance != null)
             GameManager.Instance.OnHealthPickup();
 

@@ -28,6 +28,12 @@ public class ParticleEffectManager : MonoBehaviour
     int coinIndex;
     const int CoinPoolSize = 3;
 
+    // Health pickup (2 instances)
+    ParticleSystem[] healthFlash;
+    ParticleSystem[] healthSparkles;
+    int healthIndex;
+    const int HealthPoolSize = 2;
+
     // Player damage (single)
     ParticleSystem damageFlash;
 
@@ -111,6 +117,7 @@ public class ParticleEffectManager : MonoBehaviour
         CreateMuzzleFlash();
         CreateBulletImpact();
         CreateCoinCollection();
+        CreateHealthPickup();
         CreateDamageFlash();
         CreateShieldRipple();
         CreateShieldBlock();
@@ -321,6 +328,76 @@ public class ParticleEffectManager : MonoBehaviour
             col.color = new ParticleSystem.MinMaxGradient(AlphaGradient(1f, 0f));
 
             SetRenderer(coinSparkles[i], ParticleSystemRenderMode.Billboard);
+        }
+    }
+
+    void CreateHealthPickup()
+    {
+        healthFlash = new ParticleSystem[HealthPoolSize];
+        healthSparkles = new ParticleSystem[HealthPoolSize];
+
+        for (int i = 0; i < HealthPoolSize; i++)
+        {
+            // Central flash (green-white pop)
+            healthFlash[i] = MakeSystem($"HealthFlash_{i}");
+            var main = healthFlash[i].main;
+            main.startLifetime = 0.15f;
+            main.startSpeed = 0f;
+            main.startSize = 0.4f;
+            main.startColor = new Color(0.2f, 1f, 0.3f, 0.7f);
+            main.maxParticles = 1;
+
+            var emission = healthFlash[i].emission;
+            emission.rateOverTime = 0;
+            emission.SetBursts(new[] { new ParticleSystem.Burst(0f, 1) });
+
+            var sol = healthFlash[i].sizeOverLifetime;
+            sol.enabled = true;
+            sol.size = new ParticleSystem.MinMaxCurve(1f, new AnimationCurve(
+                new Keyframe(0f, 1f), new Keyframe(0.3f, 2.5f), new Keyframe(1f, 0f)
+            ));
+
+            var col = healthFlash[i].colorOverLifetime;
+            col.enabled = true;
+            col.color = new ParticleSystem.MinMaxGradient(AlphaGradient(0.7f, 0f));
+
+            SetRenderer(healthFlash[i], ParticleSystemRenderMode.Billboard);
+
+            // Upward sparkles (green/white healing feel)
+            healthSparkles[i] = MakeSystem($"HealthSparkles_{i}");
+            main = healthSparkles[i].main;
+            main.startLifetime = 0.4f;
+            main.startSpeed = new ParticleSystem.MinMaxCurve(2f, 4f);
+            main.startSize = new ParticleSystem.MinMaxCurve(0.05f, 0.12f);
+            main.startColor = new ParticleSystem.MinMaxGradient(
+                new Color(0.2f, 1f, 0.3f, 1f),
+                new Color(0.8f, 1f, 0.8f, 1f)
+            );
+            main.gravityModifier = -0.4f;
+            main.maxParticles = 10;
+
+            emission = healthSparkles[i].emission;
+            emission.rateOverTime = 0;
+            emission.SetBursts(new[] { new ParticleSystem.Burst(0f, 6, 10) });
+
+            var shape = healthSparkles[i].shape;
+            shape.enabled = true;
+            shape.shapeType = ParticleSystemShapeType.Sphere;
+            shape.radius = 0.2f;
+
+            var vel = healthSparkles[i].velocityOverLifetime;
+            vel.enabled = true;
+            vel.orbitalY = 2.5f;
+
+            sol = healthSparkles[i].sizeOverLifetime;
+            sol.enabled = true;
+            sol.size = new ParticleSystem.MinMaxCurve(1f, AnimationCurve.Linear(0f, 1f, 1f, 0f));
+
+            col = healthSparkles[i].colorOverLifetime;
+            col.enabled = true;
+            col.color = new ParticleSystem.MinMaxGradient(AlphaGradient(1f, 0f));
+
+            SetRenderer(healthSparkles[i], ParticleSystemRenderMode.Billboard);
         }
     }
 
@@ -570,6 +647,15 @@ public class ParticleEffectManager : MonoBehaviour
 
         PlayAt(coinFlash[idx], position);
         PlayAt(coinSparkles[idx], position);
+    }
+
+    public void PlayHealthPickup(Vector3 position)
+    {
+        int idx = healthIndex % HealthPoolSize;
+        healthIndex++;
+
+        PlayAt(healthFlash[idx], position);
+        PlayAt(healthSparkles[idx], position);
     }
 
     public void PlayDamageFlash(Vector3 playerPosition)
