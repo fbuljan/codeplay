@@ -500,7 +500,7 @@ MonoBehaviour:
   lowObstaclePrefab: {fileID: 8769629811147679277, guid: e9d301f2056d53145aaec668f9d76c82, type: 3}
   highObstaclePrefab: {fileID: 5404080681815178827, guid: 82d78ab08353c894d8de50fc90af2bdf, type: 3}
   fullLaneBlockerPrefab: {fileID: 5404080681815178827, guid: 9a9ca3eb32b09ce4ab05eeedbc72ceb1, type: 3}
-  groundEnemyPrefab: {fileID: 1466547210547639837, guid: 584c29667dcf6dc4abeb88c44435c543, type: 3}
+  groundEnemyPrefab: {fileID: 7663034647107304111, guid: 2908a3fc3e8f17a4183aaa802fe79ae5, type: 3}
   airEnemyPrefab: {fileID: 7663034647107304111, guid: 26c5700405040d949a63d8d57d6ec006, type: 3}
   coinPrefab: {fileID: 5822013538250851103, guid: 75d1ab619750d7e4abaa8a7b3573a30a, type: 3}
   healthPickupPrefab: {fileID: 3791075303125733974, guid: b38bef0a8388c974ab504fe0f91fe493, type: 3}

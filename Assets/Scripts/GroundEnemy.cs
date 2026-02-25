@@ -40,6 +40,11 @@ public class GroundEnemy : Enemy
                 return;
         }
 
+        // Always face the player while charging (model faces -Z, so look away then flip 180)
+        Vector3 dirToPlayer = new Vector3(playerTransform.position.x, transform.position.y, playerTransform.position.z) - transform.position;
+        if (dirToPlayer.sqrMagnitude > 0.001f)
+            transform.rotation = Quaternion.LookRotation(-dirToPlayer);
+
         // Accelerate as we get closer — lerp from moveSpeed to chargeSpeed
         float distance = Mathf.Abs(transform.position.z - playerTransform.position.z);
         float t = 1f - Mathf.Clamp01(distance / detectionRange);
