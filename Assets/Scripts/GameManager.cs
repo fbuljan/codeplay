@@ -59,6 +59,7 @@ public class GameManager : MonoBehaviour
     float scoreMultiplier = 1f;
     bool isTrainingMode;
     bool isPaused;
+    float gameOverTime;
 
     void Awake()
     {
@@ -168,7 +169,7 @@ public class GameManager : MonoBehaviour
                 break;
 
             case GameState.GameOver:
-                if (AnyButtonPressed())
+                if (Time.unscaledTime - gameOverTime > 1.5f && AnyButtonPressed())
                     RestartGame();
                 break;
         }
@@ -233,6 +234,7 @@ public class GameManager : MonoBehaviour
                 break;
 
             case GameState.GameOver:
+                gameOverTime = Time.unscaledTime;
                 if (playerController != null)
                     playerController.SetMovementEnabled(false);
                 if (spawnManager != null)
