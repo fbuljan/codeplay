@@ -319,18 +319,17 @@ public class PlayerController : MonoBehaviour
         float aimY = GetAimY();
         Vector3 origin = transform.position + shootOffset;
 
-        // Cast a box straight forward along the aimed lane corridor
-        Vector3 castOrigin = new Vector3(aimX, aimY, origin.z);
-        Vector3 halfExtents = new Vector3(1f, 2f, 0.1f); // 2 wide, 4 tall
+        // Shoot a ray from origin directly toward the reticle position
+        Vector3 reticlePos = new Vector3(aimX, aimY, transform.position.z + reticleDistance);
+        Vector3 direction = (reticlePos - origin).normalized;
 
-        RaycastHit[] hits = Physics.BoxCastAll(
-            castOrigin, halfExtents, Vector3.forward,
-            Quaternion.identity, maxShootRange,
+        RaycastHit[] hits = Physics.RaycastAll(
+            origin, direction, maxShootRange,
             Physics.DefaultRaycastLayers, QueryTriggerInteraction.Collide
         );
         System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
 
-        Vector3 hitPos = new Vector3(aimX, aimY, origin.z + maxShootRange);
+        Vector3 hitPos = origin + direction * maxShootRange;
 
         foreach (var hit in hits)
         {
@@ -338,14 +337,14 @@ public class PlayerController : MonoBehaviour
             if (enemy != null)
             {
                 enemy.TakeDamage();
-                hitPos = enemy.transform.position;
+                hitPos = hit.point;
                 break;
             }
 
             var obstacle = hit.collider.GetComponent<Obstacle>();
             if (obstacle != null)
             {
-                hitPos = obstacle.transform.position;
+                hitPos = hit.point;
                 break;
             }
         }
@@ -452,14 +451,34 @@ public class PlayerController : MonoBehaviour
             transform.position.z + reticleDistance
         );
 
-        // Color: red for ground, blue for air
+        // Color: blue when aiming at an enemy, red otherwise
+        bool enemyAimed = IsEnemyInAimCorridor(targetX, targetY);
         var renderer = reticleVisual.GetComponent<Renderer>();
         if (renderer != null)
         {
-            renderer.material.color = aimingHigh
+            renderer.material.color = enemyAimed
                 ? new Color(0.3f, 0.5f, 1f, 0.6f)
                 : new Color(1f, 0.3f, 0.3f, 0.6f);
         }
+    }
+
+    bool IsEnemyInAimCorridor(float aimX, float aimY)
+    {
+        Vector3 origin = transform.position + shootOffset;
+        Vector3 reticlePos = new Vector3(aimX, aimY, transform.position.z + reticleDistance);
+        Vector3 direction = (reticlePos - origin).normalized;
+
+        RaycastHit[] hits = Physics.RaycastAll(
+            origin, direction, maxShootRange,
+            Physics.DefaultRaycastLayers, QueryTriggerInteraction.Collide
+        );
+
+        foreach (var hit in hits)
+        {
+            if (hit.collider.GetComponent<Enemy>() != null)
+                return true;
+        }
+        return false;
     }
 
     // ---- Lane Switching ----
