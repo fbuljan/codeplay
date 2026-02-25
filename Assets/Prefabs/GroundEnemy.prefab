@@ -123,4 +123,4 @@ MonoBehaviour:
   maxHealth: 1
   moveSpeed: 5
   chargeSpeed: 8
-  detectionRange: 40
+  detectionRange: 30

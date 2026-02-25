@@ -329,6 +329,7 @@ GameObject:
   - component: {fileID: 351667402}
   - component: {fileID: 351667403}
   - component: {fileID: 351667405}
+  - component: {fileID: 351667406}
   m_Layer: 0
   m_Name: Core
   m_TagString: Untagged
@@ -506,6 +507,25 @@ MonoBehaviour:
   - {r: 0.14, g: 0.04, b: 0.16, a: 1}
   - {r: 0.08, g: 0.12, b: 0.04, a: 1}
   - {r: 0.02, g: 0.02, b: 0.02, a: 1}
+  inputProcessor: {fileID: 351667400}
+--- !u!114 &351667406
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 351667397}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c2d1f24aee2cc0d4386a4cb7879de45a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  logoSprite: {fileID: 21300000, guid: 80fa23d095e11e440960a707e21b1928, type: 3}
+  logoSize: 100
+  logoOffset: {x: 20, y: 20}
+  maxRotation: 45
+  tiltAmplitude: 20
+  smoothSpeed: 10
   inputProcessor: {fileID: 351667400}
 --- !u!1 &705507993
 GameObject:
