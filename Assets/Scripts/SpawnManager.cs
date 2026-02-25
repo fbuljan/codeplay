@@ -593,6 +593,10 @@ public class SpawnManager : MonoBehaviour
 
     void OnEnemyDestroyed(Enemy enemy)
     {
+        var fx = ParticleEffectManager.Instance;
+        if (fx != null)
+            fx.PlayEnemyDeath(enemy.transform.position, enemy is AirEnemy);
+
         if (GameManager.Instance != null)
             GameManager.Instance.OnEnemyKilled(enemy);
     }

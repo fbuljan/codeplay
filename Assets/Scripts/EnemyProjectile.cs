@@ -44,7 +44,7 @@ public class EnemyProjectile : MonoBehaviour
         var health = other.GetComponent<PlayerHealth>();
         if (health == null) return;
 
-        health.TakeDamage(1, isEnemyDamage: true);
+        health.TakeDamage(1, isEnemyDamage: true, attackerPosition: transform.position);
         gameObject.SetActive(false);
     }
 }

@@ -332,6 +332,8 @@ public class PlayerController : MonoBehaviour
         System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
 
         Vector3 hitPos = origin + direction * maxShootRange;
+        bool hitSomething = false;
+        bool hitEnemy = false;
 
         foreach (var hit in hits)
         {
@@ -340,6 +342,8 @@ public class PlayerController : MonoBehaviour
             {
                 enemy.TakeDamage();
                 hitPos = hit.point;
+                hitSomething = true;
+                hitEnemy = true;
                 break;
             }
 
@@ -347,11 +351,21 @@ public class PlayerController : MonoBehaviour
             if (obstacle != null)
             {
                 hitPos = hit.point;
+                hitSomething = true;
                 break;
             }
         }
 
         ShowTracer(origin, hitPos);
+
+        // Particle effects
+        var fx = ParticleEffectManager.Instance;
+        if (fx != null)
+        {
+            fx.PlayMuzzleFlash(origin, direction);
+            if (hitSomething)
+                fx.PlayBulletImpact(hitPos, hitEnemy);
+        }
     }
 
     void CreateTracer()
@@ -518,6 +532,10 @@ public class PlayerController : MonoBehaviour
 
         if (shieldVisual != null)
             shieldVisual.SetActive(true);
+
+        var fx = ParticleEffectManager.Instance;
+        if (fx != null)
+            fx.PlayShieldActivation(transform.position);
     }
 
     void DeactivateShield()

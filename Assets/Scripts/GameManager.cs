@@ -60,6 +60,7 @@ public class GameManager : MonoBehaviour
     bool isTrainingMode;
     bool isPaused;
     float gameOverTime;
+    int previousHealth;
 
     void Awake()
     {
@@ -91,6 +92,15 @@ public class GameManager : MonoBehaviour
         {
             playerHealth.OnHealthChanged += OnHealthChanged;
             playerHealth.OnDied += OnPlayerDied;
+            playerHealth.OnShieldBlocked += OnShieldBlocked;
+            previousHealth = playerHealth.CurrentHealth;
+        }
+
+        // Create ParticleEffectManager if not already in scene
+        if (ParticleEffectManager.Instance == null)
+        {
+            var fxObj = new GameObject("ParticleEffectManager");
+            fxObj.AddComponent<ParticleEffectManager>();
         }
 
         // Find InputReader for reconnect and letter events
@@ -252,6 +262,15 @@ public class GameManager : MonoBehaviour
     public void OnPlayerDied()
     {
         SendGameEvent(EventPlayerDied);
+
+        // Game over disintegration effect
+        if (playerTransform != null)
+        {
+            var fx = ParticleEffectManager.Instance;
+            if (fx != null)
+                fx.PlayGameOverDisintegration(playerTransform.position);
+        }
+
         if (isTrainingMode)
         {
             if (playerHealth != null)
@@ -266,11 +285,29 @@ public class GameManager : MonoBehaviour
         if (uiManager != null)
             uiManager.UpdateHealth(currentHealth);
 
+        // Damage flash particle effect
+        if (currentHealth < previousHealth && playerTransform != null)
+        {
+            var fx = ParticleEffectManager.Instance;
+            if (fx != null)
+                fx.PlayDamageFlash(playerTransform.position);
+        }
+        previousHealth = currentHealth;
+
         // Reset multiplier on damage
         SendGameEvent(EventDamageTaken);
         scoreMultiplier = 1f;
         if (uiManager != null)
             uiManager.UpdateMultiplier(scoreMultiplier);
+    }
+
+    void OnShieldBlocked(Vector3 attackerPosition)
+    {
+        if (playerTransform == null) return;
+
+        var fx = ParticleEffectManager.Instance;
+        if (fx != null)
+            fx.PlayShieldBlock(attackerPosition, playerTransform.position + Vector3.up);
     }
 
     void OnDestroy()
@@ -279,6 +316,7 @@ public class GameManager : MonoBehaviour
         {
             playerHealth.OnHealthChanged -= OnHealthChanged;
             playerHealth.OnDied -= OnPlayerDied;
+            playerHealth.OnShieldBlocked -= OnShieldBlocked;
         }
 
         if (inputReader != null)

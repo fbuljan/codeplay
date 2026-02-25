@@ -21,6 +21,7 @@ public class PlayerHealth : MonoBehaviour
 
     public event Action<int> OnHealthChanged;
     public event Action OnDied;
+    public event Action<Vector3> OnShieldBlocked;
 
     Renderer playerRenderer;
     float invincibilityTimer;
@@ -61,10 +62,14 @@ public class PlayerHealth : MonoBehaviour
         IsShielded = shielded;
     }
 
-    public void TakeDamage(int amount = 1, bool isEnemyDamage = false)
+    public void TakeDamage(int amount = 1, bool isEnemyDamage = false, Vector3 attackerPosition = default)
     {
         if (IsInvincible || PermanentlyInvincible) return;
-        if (IsShielded && isEnemyDamage) return;
+        if (IsShielded && isEnemyDamage)
+        {
+            OnShieldBlocked?.Invoke(attackerPosition);
+            return;
+        }
         if (CurrentHealth <= 0) return;
 
         CurrentHealth = Mathf.Max(0, CurrentHealth - amount);

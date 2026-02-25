@@ -21,6 +21,10 @@ public class Coin : MonoBehaviour
         var health = other.GetComponent<PlayerHealth>();
         if (health == null) return;
 
+        var fx = ParticleEffectManager.Instance;
+        if (fx != null)
+            fx.PlayCoinCollect(transform.position);
+
         if (GameManager.Instance != null)
             GameManager.Instance.OnCoinCollected(this);
 
