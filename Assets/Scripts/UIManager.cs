@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -80,6 +81,9 @@ public class UIManager : MonoBehaviour
     TMP_InputField portInputField;
     TMP_InputField baudInputField;
     TextMeshProUGUI connectionStatusText;
+
+    // Fade coroutine tracking — prevents race conditions on rapid state changes
+    Dictionary<CanvasGroup, Coroutine> activeFades = new Dictionary<CanvasGroup, Coroutine>();
 
     // Score animation
     GameObject scoreContainer;
@@ -492,14 +496,23 @@ public class UIManager : MonoBehaviour
 
     void ShowPanel(GameObject panel, CanvasGroup cg)
     {
+        CancelFade(cg);
         panel.SetActive(true);
-        StartCoroutine(FadeCanvasGroup(cg, 0f, 1f, panelFadeDuration));
+        activeFades[cg] = StartCoroutine(FadeCanvasGroup(cg, 0f, 1f, panelFadeDuration, () => activeFades.Remove(cg)));
     }
 
     void HidePanel(GameObject panel, CanvasGroup cg)
     {
+        CancelFade(cg);
         if (panel.activeSelf)
-            StartCoroutine(FadeCanvasGroup(cg, cg.alpha, 0f, panelFadeDuration));
+            activeFades[cg] = StartCoroutine(FadeCanvasGroup(cg, cg.alpha, 0f, panelFadeDuration, () => activeFades.Remove(cg)));
+    }
+
+    void CancelFade(CanvasGroup cg)
+    {
+        if (activeFades.TryGetValue(cg, out var running) && running != null)
+            StopCoroutine(running);
+        activeFades.Remove(cg);
     }
 
     IEnumerator PulseText(TextMeshProUGUI tmp, Color baseColor, float speed, float minAlpha)
