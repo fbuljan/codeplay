@@ -39,8 +39,6 @@ public class PlayerController : MonoBehaviour
     [SerializeField] Material reticleAimedMaterial;
 
     [Header("Lane Switching")]
-    [SerializeField] float tiltAmplitude = 0.5f;
-    [SerializeField] float tiltLaneThreshold = 0.5f;
     [SerializeField] float laneSwitchSpeed = 10f;
     [SerializeField] float laneSwitchCooldown = 0.3f;
 
@@ -534,14 +532,13 @@ public class PlayerController : MonoBehaviour
     {
         if (inputProcessor == null) return;
 
-        Vector3 tilt = inputProcessor.GetTilt();
-        float amp = Mathf.Max(tiltAmplitude, 0.01f);
-        float nx = Mathf.Clamp(-tilt.x / amp, -1f, 1f);
+        const float tiltThreshold = 50f;
+        float tiltX = -inputProcessor.GetTilt().x;
 
         int newLane;
-        if (nx < -tiltLaneThreshold)
+        if (tiltX < -tiltThreshold)
             newLane = 0;
-        else if (nx > tiltLaneThreshold)
+        else if (tiltX > tiltThreshold)
             newLane = 2;
         else
             newLane = 1;

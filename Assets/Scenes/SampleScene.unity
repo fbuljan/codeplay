@@ -222,8 +222,6 @@ MonoBehaviour:
   airAimY: 5
   reticleMaterial: {fileID: 2100000, guid: 7de3d9cee6a876a4c8c04164b71eb097, type: 2}
   reticleAimedMaterial: {fileID: 2100000, guid: 906d359205a855c4cbae3728e8551356, type: 2}
-  tiltAmplitude: 0.2
-  tiltLaneThreshold: 0.4
   laneSwitchSpeed: 10
   laneSwitchCooldown: 0.3
   shieldDuration: 1
@@ -5273,7 +5271,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2976664452809703641}
   m_LocalRotation: {x: -0, y: -0, z: -1, w: 0}
-  m_LocalPosition: {x: -12.9, y: 0, z: -10.3}
+  m_LocalPosition: {x: -10.31, y: 0, z: -9.04}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

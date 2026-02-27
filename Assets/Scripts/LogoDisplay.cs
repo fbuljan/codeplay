@@ -104,7 +104,7 @@ public class LogoDisplay : MonoBehaviour
         if (!playing || inputProcessor == null) return;
 
         Vector3 tilt = inputProcessor.GetTilt();
-        // tilt is a gravity vector (~0,0,10 when flat). Derive roll/pitch via atan2.
+        // tilt is a raw gravity vector (~0,0,100 when flat). Derive roll/pitch via atan2.
         float roll = Mathf.Atan2(tilt.x, tilt.z) * Mathf.Rad2Deg;
         float pitch = Mathf.Atan2(tilt.y, tilt.z) * Mathf.Rad2Deg;
 
